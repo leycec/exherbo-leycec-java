@@ -1,23 +1,29 @@
 # ====================[ README                             ]====================
 #
 # --------------------( SYNOPSIS                           )--------------------
-# Hello, and welcome to "exherbo-leycec"! This is a third-party Exherbo
+# Hello, and welcome to "exherbo-leycec-java"! This is a third-party Exherbo
 # repository maintaining exheres authored by leycec (i.e., Cecil Curry). Exheres
 # are thought to work with leycec's current machine (i.e., the AMD64-armed Dell
 # Zino), but should be treated with caution under other machines.
+#
+# Java exheres closely parallel those in the "java" repository, and (expectedly)
+# tend to emphasize Java and Eclipse. If you like the repository, you
+# may also enjoy my general-purpose Exherbo repository at:
+#
+#     http://github.com/leycec/exherbo-leycec
 #
 # --------------------( INSTALLATION                       )--------------------
 # Install this Exherbo repository as you would any other: e.g., via
 #
 #     # Add an Exherbo repository configuration.
-#     cat <<EOF > /etc/paludis/repositories/leycec.conf
-#       location = ${ROOT}/var/db/paludis/repositories/leycec
-#       sync = git://github.com/leycec/exherbo-leycec.git
+#     cat <<EOF > /etc/paludis/repositories/leycec-java.conf
+#       location = ${ROOT}/var/db/paludis/repositories/leycec-java
+#       sync = git://github.com/leycec/exherbo-leycec-java.git
 #       format = exheres
 #     EOF
 #
 #     # Get this repository. (Note the "x-" prefix, below!)
-#     paludis -s x-leycec
+#     paludis -s x-leycec-java
 #
 # If you receive errors, ensure that you've installed all repository masters
 # (i.e., dependencies) required by this repository. Currently, these are the
