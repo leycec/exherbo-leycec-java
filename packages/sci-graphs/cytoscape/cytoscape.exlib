@@ -1,0 +1,68 @@
+# Copyright 2010 Cecil Curry <leycec@gmail.com>
+# Distributed under the terms of the GNU General Public License v2
+
+require antefix
+#xport_exlib_phases src_unpack src_prepare src_install pkg_postinst
+export_exlib_phases src_prepare src_install
+
+BUGS_TO="leycec@gmail.com"
+
+SUMMARY="Visualization platform for real-world networks"
+DESCRIPTION="
+Cytoscape is an open source bioinformatics software platform for visualizing
+molecular interaction networks and integrating these interactions with gene
+expression profiles and other state data. It is also, increasingly, a platform
+for visualizing real-world networks (i.e., heterogenous, large graphs) and the
+operation of graph theoretic operations on such networks.
+"
+
+# This exheres version, with dots replaced by underscores.
+CYTOSCAPE_PV=$(ever replace_all _)
+
+# The minor and minor versions (i.e., first two digits) of the above version.
+CYTOSCAPE_PVMM=$(ever range 1-2 "${CYTOSCAPE_PV}")
+
+DOWNLOADS="http://chianti.ucsd.edu/Cyto-${CYTOSCAPE_PV}/cytoscapeSource-v${PV}.tar.gz"
+HOMEPAGE="http://www.${PN}.org"
+UPSTREAM_DOCUMENTATION="${HOMEPAGE}/manual/Cytoscape${CYTOSCAPE_PVMM}Manual.html [[ lang = en ]]"
+UPSTREAM_RELEASE_NOTES="${HOMEPAGE}/cyto_${CYTOSCAPE_PVMM}_features.php [[ lang = en ]]"
+
+LICENCES="LGPL-2.1"
+MYOPTIONS=""
+
+DEPENDENCIES="
+    build:
+        dev-java/jakarta-regexp[>=1.4]
+        dev-java/xalan-java
+    build+run:
+        dev-java/jsr173
+"
+#       dev-java/batik[>=1.6]
+#       dev-java/relaxng-datatype
+#       dev-java/xsdlib
+
+#       dev-java/colt
+#       dev-java/concurrent-util
+#       dev-java/fastinfoset
+#       dev-java/itext
+#       dev-java/jdom:1
+#       dev-java/jsr181
+#       dev-java/jsr250
+#       dev-java/junit
+#       dev-java/swing-layout:1
+#       dev-java/sjsxp
+#       dev-java/stax-ex
+#       dev-java/xmlstreambuffer
+#       java-virtuals/saaj-api
+
+#DEFAULT_SRC_PREPARE_PATCHES=( "${FILES}/CMakeLists.txt.patch" )
+#CMAKE_SRC_CONFIGURE_OPTION_ENABLES=( "doc DOXYGEN" )
+
+cytoscape_src_prepare() {
+    antefix_src_prepare
+}
+
+cytoscape_src_install() {
+    antefix_src_install
+}
+
