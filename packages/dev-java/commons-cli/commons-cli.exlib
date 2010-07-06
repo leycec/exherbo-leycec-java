@@ -1,0 +1,28 @@
+# Copyright 2010 Cecil Curry <leycec@gmail.com>
+# Distributed under the terms of the GNU General Public License v2
+# Based in part upon 'commons-cli-1.4.ebuild' from Gentoo, which is:
+#     Copyright 1999-2010 Gentoo Foundation
+
+# Commons CLI 1.2.x migrated from Ant to Maven. Undo that.
+require antefix [ create_build_xml=true ] apache-commons
+
+BUGS_TO="leycec@gmail.com"
+
+SUMMARY="Java API for parsing command line options passed to programs."
+DESCRIPTION="
+Commons CLI is a Java API for parsing command line options passed to
+programs as well as printing help messages detailing those options.
+"
+
+# Alas, this documentation is specific to the newest exheres.
+UPSTREAM_DOCUMENTATION="${HOMEPAGE}/api-release [[ lang = en ]]"
+UPSTREAM_RELEASE_NOTES="${HOMEPAGE}/release_$(ever replace_all _).html [[ lang = en ]]"
+
+#FIXME: Add "junit" support to "create_build_xml" functionality in antefix.
+#DEPENDENCIES+="
+#    test:
+#        dev-java/junit:4
+#"
+
+ANT_SRC_COMPILE_SOURCE_DIR="src/java"
+
