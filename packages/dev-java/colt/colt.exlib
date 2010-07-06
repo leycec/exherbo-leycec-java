@@ -1,0 +1,43 @@
+# Copyright 2010 Cecil Curry <leycec@gmail.com>
+# Distributed under the terms of the GNU General Public License v2
+
+require antefix
+
+BUGS_TO="leycec@gmail.com"
+
+SUMMARY="Java libraries for high performance scientific and technical computing."
+DESCRIPTION="
+Colt is a collection of Java libraries for high performance scientific and
+technical computing. It is particularly useful in the domain of high energy
+physics at CERN: it contains, among others, efficient and usable data structures
+and algorithms for offline and online data analysis, linear algebra, multi-
+dimensional arrays, statistics, histogramming, Monte Carlo simulation, and
+parallel and concurrent programming. It summons some of the best concepts,
+designs and implementations thought up over time by the community, ports or
+improves them and introduces new approaches where need arises. In overlapping
+areas, it is competitive or superior to toolkits such as STL, Root, HTL, CLHEP,
+TNT, GSL, C-RAND / WIN-RAND, (all C/C++) as well as  IBM Array and JDK 1.2
+Collections framework (all Java).
+"
+
+HOMEPAGE="http://acs.lbl.gov/software/${PN}/"
+DOWNLOADS="${HOMEPAGE}/${PN}-download/releases/${PNV}.tar.gz"
+UPSTREAM_DOCUMENTATION="${HOMEPAGE}/doc/docindex.html [[ lang = en ]]"
+
+SLOT="1"
+LICENCES="Colt"
+DEPENDENCIES="
+    build+run:
+        dev-java/concurrent:1
+"
+
+WORK="${WORKBASE}/${PN}"
+
+JAVA_SRC_LIBRARY_DIR="lib"
+JAVA_SRC_PREPARE_JARS=( "concurrent:1" )
+JAVA_SRC_INSTALL_JARS=( "lib/${PN}.jar" )
+
+ANT_SRC_CONFIGURE_PARAMS=( init )
+ANT_SRC_COMPILE_PARAMS=( javac )
+ANT_SRC_INSTALL_PARAMS=( jar )
+

@@ -32,7 +32,9 @@ MYOPTIONS=""
 
 DEPENDENCIES="
     build:
+        dev-java/colt:1
         dev-java/jakarta-regexp[>=1.4]
+        dev-java/piccolo2d:1.3
         dev-java/xalan-java
     build+run:
         dev-java/jsr173
@@ -41,7 +43,6 @@ DEPENDENCIES="
 #       dev-java/relaxng-datatype
 #       dev-java/xsdlib
 
-#       dev-java/colt
 #       dev-java/concurrent-util
 #       dev-java/fastinfoset
 #       dev-java/itext
@@ -54,6 +55,8 @@ DEPENDENCIES="
 #       dev-java/stax-ex
 #       dev-java/xmlstreambuffer
 #       java-virtuals/saaj-api
+
+WORK="${WORKBASE}"
 
 #DEFAULT_SRC_PREPARE_PATCHES=( "${FILES}/CMakeLists.txt.patch" )
 #CMAKE_SRC_CONFIGURE_OPTION_ENABLES=( "doc DOXYGEN" )
