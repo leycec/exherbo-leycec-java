@@ -57,7 +57,8 @@
 #
 # See "Eclipse Build Wiki" above to map Eclipse versions to "build_v" versions.
 
-require antefix
+# Eclipse comes bundled with the kitchen sink. We want that sink.
+require antefix [ clean_jar_files=false ]
 export_exlib_phases src_unpack src_prepare src_install pkg_postinst
 
 # Exheres slot, passed as an exparam so as to be available in global scope.
@@ -166,7 +167,7 @@ UPSTREAM_RELEASE_NOTES="http://www.${PN}.org/${PN}/development/readme_${PN}_${EC
 # Building Eclipse documentation plugins consumes, on rough average, twice the
 # computational resources as not doing so and is thus discouraged.
 LICENCES="EPL-1.0"
-MYOPTIONS+="
+MYOPTIONS="
     gnome
     doc    [[ description = [ Install Eclipse documentation plugins (not recommended) ] ]]
     source [[ description = [ Install Eclipse source plugins (not recommended) ] ]]
@@ -193,7 +194,7 @@ MYOPTIONS+="
 # 
 # Eclipse is seems to be lenient concerning all other exheres. Thus, require the
 # newest slots and versions where we can.
-DEPENDENCIES+="
+DEPENDENCIES="
     build:
         app-arch/bzip2
         app-text/xmlstarlet
@@ -224,9 +225,6 @@ DEPENDENCIES+="
 "
 
 WORK="${WORKBASE}/${ECLIPSE_BUILD_NV}"
-
-# Eclipse comes bundled with the kitchen sink. We want that sink.
-JAVA_IS_CLEANING_JAR_FILES=
 
 # The "unpack" task in the top-level "build.xml" file unpacks the
 # "${ECLIPSE_FETCH_ARCHIVE}" archive.
@@ -298,7 +296,7 @@ ECLIPSE_CONFIG_FILE="/etc/${PN}.ini"
 
 # Array of all optional Ant task names to be installed as precompiled jar files.
 # (This should eventually be reduced to none.)
-ECLIPSE_ANT_BINARY_TASKS=(
+eclipse_ant_binary_taskS=(
     ant-antlr
     ant-apache-bcel ant-apache-bsf ant-apache-log4j ant-apache-oro
     ant-apache-regexp ant-apache-resolver
@@ -322,7 +320,6 @@ eclipse_src_unpack() {
     edo tar xvjf "${FETCHEDDIR}/${ECLIPSE_ANT_ARCHIVE}" \
         --anchored --wildcards "${ECLIPSE_ANT_NV}/lib/*.jar"
 
-    echo ">>> Checking build architecture"
     if   option platform:amd64; then ECLIPSE_BUILD_ARCH="x86_64"
     elif option platform:x86;   then ECLIPSE_BUILD_ARCH="x86"
     fi
@@ -336,17 +333,15 @@ eclipse_src_unpack() {
         "-DlibDir=${ECLIPSE_LIBDIR}"
     )
 
-    echo ">>> Creating directory tree"
     edo ln -s "${FETCHEDDIR}/${ECLIPSE_FETCH_ARCHIVE}" "${WORK}"/
 
     # Patch the top-level "build.xml" file prior to invoking Ant, below. Note
     # that, as the current directory is not ${WORK} but as all patches assume
     # that is this current directory, pushd there prior to patching.
-    echo ">>> Patching build.xml"
-    pushd "${WORK}"
-
+    #
     # Prevent Ant from building "gnome" support, if disabled. Note that it is
     # not sufficient to pass "-Dbuild.libgnomeproxy=false", due to subtleties.
+    edo pushd "${WORK}"
     if ! option gnome; then
         eclipse_xmlstarlet_ed "${ANT_BUILD_XML}" --delete \
             "/project/target[@name='compilelibs']/antcall[@target='compile.libgnomeproxy']"
@@ -358,7 +353,7 @@ eclipse_src_unpack() {
         "/project/target[@name='compilelibs']/ant[@target='build.nativeLibraries']" \
 
     # Pop goes whoever reads comments.
-    popd
+    edo popd
 
     # Call the parent "src_unpack" last, as this invokes Ant with the "unpack"
     # task and thus requires Ant parameters to have been established, above.
@@ -380,30 +375,28 @@ eclipse_src_prepare() {
     # to prevent us from having to rewrite all patch files for minor version
     # bumps. Without this, we would have to hardcode paths starting with
     # "build/eclipse-3.5.2-src/" in each patch header. With this, we don't.
-    echo ">>> Patching source files"
-    pushd "${ECLIPSE_BUILD_DIR}"
+    edo pushd "${ECLIPSE_BUILD_DIR}"
     eclipse_patch "gtk-make_linux_mak.patch"
-    popd
+    edo popd
 
     # Convert hardcoded library paths to Exherbo-specific library paths. This is
     # only a precautionary measure in the event of Eclipse refusing to recognize
     # the above "-Dbootclasspath=" Ant parameter. (It happens. Believe us.)
-    echo ">>> Patching build files"
-    local ECLIPSE_BUILD_PROPERTIES
-    for   ECLIPSE_BUILD_PROPERTIES in \
+    local eclipse_build_properties
+    for   eclipse_build_properties in \
         "build.properties" "pdebuild.properties" \
         "${ECLIPSE_BUILD_DIR}/buildConfigs/eclipse-build-config/build.properties" \
         "${ECLIPSE_BUILD_DIR}/plugins/org.eclipse.pde.build/feature/builder/build.properties" \
         "${ECLIPSE_BUILD_DIR}/plugins/org.eclipse.pde.build/templates/headless-build/build.properties" \
         ; do
-        edo sed -i "${ECLIPSE_BUILD_PROPERTIES}" -r \
+        edo sed -i "${eclipse_build_properties}" -r \
             -e "s~=.+/rt\.jar.*$~=${ECLIPSE_BOOTSTRAP_CLASSPATH}~"
     done
 
-    echo ">>> Removing cross-architecture plugins"
-    local ECLIPSE_OS_ALL_BAD=$(eclipse_grep_names_not_matching "${ECLIPSE_OS}" "${ECLIPSE_OS_ALL}")
-    local ECLIPSE_WS_ALL_BAD=$(eclipse_grep_names_not_matching "${ECLIPSE_WS}" "${ECLIPSE_WS_ALL}")
-    local ECLIPSE_BUILD_ARCH_ALL_BAD=$(eclipse_grep_names_not_matching "${ECLIPSE_BUILD_ARCH}" "${ECLIPSE_BUILD_ARCH_ALL}")
+    # Remove cross-architecture plugins.
+    local eclipse_os_all_bad=$(eclipse_grep_names_not_matching "${ECLIPSE_OS}" "${ECLIPSE_OS_ALL}")
+    local eclipse_ws_all_bad=$(eclipse_grep_names_not_matching "${ECLIPSE_WS}" "${ECLIPSE_WS_ALL}")
+    local eclipse_build_arch_all_bad=$(eclipse_grep_names_not_matching "${ECLIPSE_BUILD_ARCH}" "${ECLIPSE_BUILD_ARCH_ALL}")
 
     # Dynamically construct an XPATH expression matching all "feature.xml"
     # plugin elements not corresponding to this architecture. These elements
@@ -414,15 +407,15 @@ eclipse_src_prepare() {
     # These are mandatory plugins.
     local PLUGIN_XPATH_EXPRESSION="(@id!='org.eclipse.update.core.linux' and @id!='org.eclipse.core.net.linux.x86') and ("
 
-    local ECLIPSE_OS_BAD ECLIPSE_WS_BAD ECLIPSE_BUILD_ARCH_BAD
-    for   ECLIPSE_OS_BAD in ${ECLIPSE_OS_ALL_BAD} ; do
-        PLUGIN_XPATH_EXPRESSION+="@os='${ECLIPSE_OS_BAD}' or "
+    local eclipse_os_bad eclipse_ws_bad eclipse_build_arch_bad
+    for   eclipse_os_bad in ${eclipse_os_all_bad} ; do
+        PLUGIN_XPATH_EXPRESSION+="@os='${eclipse_os_bad}' or "
     done
-    for   ECLIPSE_WS_BAD in ${ECLIPSE_WS_ALL_BAD} ; do
-        PLUGIN_XPATH_EXPRESSION+="@ws='${ECLIPSE_WS_BAD}' or "
+    for   eclipse_ws_bad in ${eclipse_ws_all_bad} ; do
+        PLUGIN_XPATH_EXPRESSION+="@ws='${eclipse_ws_bad}' or "
     done
-    for   ECLIPSE_BUILD_ARCH_BAD in ${ECLIPSE_BUILD_ARCH_ALL_BAD} ; do
-        PLUGIN_XPATH_EXPRESSION+="@arch='${ECLIPSE_BUILD_ARCH_BAD}' or "
+    for   eclipse_build_arch_bad in ${eclipse_build_arch_all_bad} ; do
+        PLUGIN_XPATH_EXPRESSION+="@arch='${eclipse_build_arch_bad}' or "
     done
 
     # Replace the last accidentally introduced " or " expression with a trailing ")".
@@ -431,21 +424,18 @@ eclipse_src_prepare() {
     # Do it. Do it now!
     eclipse_remove_plugins_matching "${PLUGIN_XPATH_EXPRESSION}"
 
-    echo ">>> Removing cross-architecture SWT plugins"
+    # Remove cross-architecture SWT plugins.
     eclipse_remove_plugins_matching "(contains(@id, 'org.eclipse.swt.') and not(contains(@id, '${ECLIPSE_BUILD_PACKAGE_SUFFIX}'))) or (contains(@id, 'org.eclipse.equinox.launcher.') and not(contains(@id, '${ECLIPSE_BUILD_PACKAGE_SUFFIX}')))"
 
     #FIXME leycec: enabling "doc" causes sydbox network violations. Whitelist.
-    if ! option doc; then
-        echo ">>> Removing documentation plugins"
-        eclipse_remove_plugins_matching "contains(@id, '.doc.')"
-    fi
 
-    if ! option source; then
-        echo ">>> Removing source plugins"
-        eclipse_remove_plugins_matching "contains(@id, '.source')"
-    fi
+    # Remove documentation plugins, if not needed.
+    option 'doc'    || eclipse_remove_plugins_matching "contains(@id, '.doc.')"
 
-    echo ">>> Creating OSGi dependency properties"
+    # Remove source plugins, if not needed.
+    option 'source' || eclipse_remove_plugins_matching "contains(@id, '.source')"
+
+    # Create OSGi dependency properties.
     eclipse_symlink_osgi_dependency "com.ibm.icu"                   "icu4j:4"
     eclipse_symlink_osgi_dependency "com.jcraft.jsch"               "jsch:0"
     eclipse_symlink_osgi_dependency "javax.servlet"                 "tomcat:6 servlet-api"
@@ -469,14 +459,14 @@ eclipse_src_prepare() {
 #       "org.eclipse.swt.${ECLIPSE_WS}.${ECLIPSE_OS}.${ECLIPSE_BUILD_ARCH}.jar" \
 #       $(which_installed_jar_file "swt:${SLOT}")
 
-    echo ">>> Creating non-OSGi dependency properties"
-    eclipse_symlink_nonosgi_dependency "org.junit"                  "junit:3"
-    eclipse_symlink_nonosgi_dependency "org.junit4"                 "junit:4"
+    # Create non-OSGi dependency properties.
+    eclipse_symlink_nonosgi_dependency "org.junit"  "junit:3"
+    eclipse_symlink_nonosgi_dependency "org.junit4" "junit:4"
 
-    # Non-OSGI jar files, Ant-specific and provided by the "apache-ant" exheres.
-    echo ">>> Creating non-OSGi Ant dependency properties"
-    local ECLIPSE_ANT_TASK
-    for   ECLIPSE_ANT_TASK in \
+    # Create non-OSGi Ant dependency properties (i.e., jar files provided by the
+    # "apache-ant" exheres).
+    local eclipse_ant_task
+    for   eclipse_ant_task in \
         ant ant-jmf ant-junit ant-launcher ant-nodeps ant-swing ant-trax ; do
         # This three parameter version of "eclipse_symlink_nonosgi_dependency"
         # gets these parameters:
@@ -488,23 +478,22 @@ eclipse_src_prepare() {
         #     parameter into an absolute path: e.g.,
         #     "/usr/share/ant/lib/ant-trax.jar".
         eclipse_symlink_nonosgi_dependency "org.apache.ant" \
-               "/lib/${ECLIPSE_ANT_TASK}\\.jar" \
-            "ant lib/${ECLIPSE_ANT_TASK}"
+               "/lib/${eclipse_ant_task}\\.jar" \
+            "ant lib/${eclipse_ant_task}"
     done
 
     # Non-OSGI jar files, Ant-specific but not provided by the "apache-ant"
     # exheres. Naturally, this should be fixed.
-    local ECLIPSE_ANT_BINARY_TASK
-    for   ECLIPSE_ANT_BINARY_TASK in "${ECLIPSE_ANT_BINARY_TASKS[@]}"; do
+    local eclipse_ant_binary_task
+    for   eclipse_ant_binary_task in "${eclipse_ant_binary_taskS[@]}"; do
         eclipse_copy_nonosgi_dependency "org.apache.ant" \
-            "/lib/${ECLIPSE_ANT_BINARY_TASK}\\.jar" \
-            "${ECLIPSE_ANT_WORK}/lib/${ECLIPSE_ANT_BINARY_TASK}.jar"
+            "/lib/${eclipse_ant_binary_task}\\.jar" \
+            "${ECLIPSE_ANT_WORK}/lib/${eclipse_ant_binary_task}.jar"
     done
 
     #FIXME leycec: should be uncommented at some point to symlink in the
     #already compiled "/usr/share/swt/${SLOT}/swt.jar" file.
 #   local SWT_JAR_FILE_TARGET="${ECLIPSE_BUILD_DIR}/plugins/${ECLIPSE_SWT_PACKAGE_NAME}/${ECLIPSE_SWT_PACKAGE_NAME}.jar"
-#   echo ">>> Symlinking SWT"
 #   local SWT_JAR_FILE_SOURCE=$(which_installed_jar_file "swt:${SLOT}")
 #   local SWT_JAR_FILE_TARGET="${ECLIPSE_BUILD_DIR}/plugins/${ECLIPSE_SWT_PACKAGE_NAME}/swt.jar"
 #   edo ln -sf "${SWT_JAR_FILE_SOURCE}" "${SWT_JAR_FILE_TARGET}"
@@ -529,7 +518,6 @@ eclipse_src_install() {
     # Install Eclipse to a slotted directory of the proper multilib tree. Note
     # Eclipse installs a "${ECLIPSE_HOME_IMAGE_PREFIX}/share" directory as well,
     # but that it provides so few files as to hardly benefit from slotting.
-    echo ">>> Installing distribution tree"
     edo mv  "${ECLIPSE_HOME_IMAGE}" "${IMAGE}${ECLIPSE_HOME}"
     keepdir "${ECLIPSE_HOME}/dropins"
     keepdir "${ECLIPSE_PREFIX}/share/${PN}/dropins"
@@ -540,7 +528,6 @@ eclipse_src_install() {
     # is a bit unhelpful. (And besides, the absolute path of the raw executable
     # is changed to "/usr/$(get_libdir)/eclipse/bin/eclipse", meaning we would
     # have to replace the symlink anyway. It's more trouble than it's worth!)
-    echo ">>> Installing launcher script"
     edo rm "${IMAGE}${ECLIPSE_PREFIX}/bin/eclipse"
     edo cp "${FILES}/${SLOT}/${PN}.bash" "${TEMP}"/
     edo sed -i "${TEMP}/${PN}.bash" \
@@ -549,7 +536,6 @@ eclipse_src_install() {
     newbin "${TEMP}/${PN}.bash" "${ECLIPSE_LAUNCH_FILENAME}"
 
     # Install the launcher configuration files.
-    echo ">>> Installing environment file"
     hereenvd "${ECLIPSE_ENVIRO_FILENAME}" <<EOF
 ECLIPSE_HOME="${ECLIPSE_HOME}"
 EOF

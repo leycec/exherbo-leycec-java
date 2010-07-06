@@ -1,0 +1,14 @@
+# Copyright 2010 Cecil Curry <leycec@gmail.com>
+# Distributed under the terms of the GNU General Public License v2
+
+# Set this prior to requiring "piccolo2d", as that exlib requires "googlecode"
+# which in turn accesses this global.
+MY_PNV="Piccolo2D.Java-${PV}"
+
+require piccolo2d
+
+SLOT="1.2"
+PLATFORMS="~amd64 ~x86"
+
+WORK="${WORKBASE}/piccolo-${PV}"
+

@@ -1,0 +1,56 @@
+# Copyright 2010 Cecil Curry <leycec@gmail.com>
+# Distributed under the terms of the GNU General Public License v2
+
+# ....................{ EXLIB                              }....................
+require antefix googlecode [ suffix=zip ]
+
+# Cache the HOMEPAGE the "googlecode" exlib set, above.
+GOOGLECODE_HOMEPAGE="${HOMEPAGE}"
+
+# ....................{ EXHERES                            }....................
+BUGS_TO="leycec@gmail.com"
+
+SUMMARY="Java toolkit for developing Zoomable User Interfaces (ZUIs)"
+DESCRIPTION="
+Piccolo2D is a Java toolkit supporting the development of 2D structured graphics
+programs, in general, and Zoomable User Interfaces (ZUIs), in particular. A ZUI
+is a new kind of interface presenting a huge canvas of information on a
+traditional computer display by letting the user smoothly zoom in (to obtain
+detailed information) and zoom out (to obtain an overview). Piccolo2d uses a so-
+called \"scene graph\" model common to 3D environments. So, Piccolo2D maintains
+a hierarchal structure of objects and cameras, allowing application developers
+to orient, group, and manipulate objects in interactive, meaningful ways.
+"
+
+HOMEPAGE="http://www.${PN}.org"
+UPSTREAM_DOCUMENTATION="${HOMEPAGE}/doc/${PN}.java/release-${PV}/core/apidocs/index.html [[ lang = en ]]"
+UPSTREAM_RELEASE_NOTES="${GOOGLECODE_HOMEPAGE}/svn/${PN}.java/tags/release-${PV}/ReleaseNotes.txt [[ lang = en ]]"
+
+LICENCES="BSD-2"
+DEPENDENCIES="
+    build+run:
+        dev-java/swt:3.5
+"
+
+JAVA_SRC_LIBRARY_DIR="lib"
+JAVA_SRC_PREPARE_JARS=( "swt:3.5" )
+
+DEFAULT_SRC_INSTALL_EXTRA_DOCS=( "Readme.txt" "ReleaseNotes.txt" )
+
+# Piccolo2D 1.2.x installs two jar files: "piccolo.jar" and "piccolox.jar".
+# The former has the Piccolo2D core, while the latter has the Piccolo2D SWT
+# integration. Both are needed (e.g., by Cytoscape); thus both are built.
+JAVA_SRC_INSTALL_JARS=( "build/piccolo.jar" "build/piccolox.jar" )
+
+ANT_SRC_CONFIGURE_PARAMS=( prepare-piccolo prepare-extras )
+ANT_SRC_COMPILE_PARAMS=( compile-piccolo compile-extras )
+ANT_SRC_INSTALL_PARAMS=( piccolo extras )
+
+#FIXME: Obsolete.
+# Required by the Piccolo2D 1.3.x exheres.
+#myexparam -b create_build_xml=false
+#
+#require \
+#    antefix [ create_build_xml=$(exparam create_build_xml) ] \
+#    googlecode [ suffix=zip ]
+

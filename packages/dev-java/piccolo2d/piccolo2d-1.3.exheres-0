@@ -1,0 +1,46 @@
+# Copyright 2010 Cecil Curry <leycec@gmail.com>
+# Distributed under the terms of the GNU General Public License v2
+
+#FIXME: This exheres is close to working. It needs to also compile and bundle
+#the top-sevel "swt" directory into a JAR.
+
+# Piccolo2D requires Maven as of version 1.3. Maven is horrible, however. Thus,
+# this exlib ignores Maven "pom.xml" files and instead simply creates a skeleton
+# Ant "build.xml" file with which it then builds. Fortunately, as Piccolo2D only
+# depends upon SWT, this is a very simple build process. (Why did they ever move
+# to Maven? O, the lamentable power of hype.)
+#
+# Set this prior to requiring "piccolo2d", as that exlib requires "googlecode"
+# which in turn accesses this global.
+MY_PNV="${PNV}-src"
+
+require piccolo2d
+
+SLOT="1.3"
+PLATFORMS="~amd64 ~x86"
+
+WORK="${WORKBASE}/${MY_PNV}"
+
+# Piccolo2D 1.3.x bundles an excessive amount of cruft. Ignore everything except
+# Java sources in these paths.
+ANT_PARAMS=(
+    -Dversion=${PV}
+    -Dyear=2010
+    -Dsrc.dir="core/src/main/java"
+    -Dextras.dir="extras/src/main/java"
+    -Dswt.dir="swt/src/main/java"
+)
+
+# Piccolo2D 1.3.x additionally provides an "swt" module, so build that as well.
+ANT_SRC_CONFIGURE_PARAMS+=( prepare-swt )
+ANT_SRC_COMPILE_PARAMS+=( compile-swt )
+ANT_SRC_INSTALL_PARAMS+=( swt )
+JAVA_SRC_INSTALL_JARS+=( "build/piccoloswt.jar" )
+
+src_unpack() {
+    antefix_src_unpack
+
+    # Establish the default "build.xml" file.
+    edo cp "${FILES}/${PNV}.build.xml" "${WORK}/build.xml"
+}
+
