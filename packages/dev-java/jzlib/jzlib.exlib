@@ -4,7 +4,6 @@
 # JZlib ships no "build.xml" file. Let's help them with that.
 require antefix [ create_build_xml=true ] jcraft
 
-# Smallest exlib evar.
 BUGS_TO="leycec@gmail.com"
 SUMMARY="Pure Java implementation of zlib"
 DESCRIPTION="

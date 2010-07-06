@@ -22,7 +22,7 @@ myexparam download_id=
 # ....................{ SETTINGS                           }....................
 BUGS_TO="leycec@gmail.com"
 
-SUMMARY="JavaCC generates Java source for parsing formal grammars"
+SUMMARY="Java sourcecode generator for parsing formal grammars"
 DESCRIPTION="
 JavaCC, the Java Compiler Compiler, is an open-source parser generator for the
 Java programming language. It's similar to Yacc in that it generates a parser
@@ -36,7 +36,7 @@ DOWNLOADS="${HOMEPAGE}/files/documents/17/$(exparam download_id)/${PNV}src.tar.g
 UPSTREAM_DOCUMENTATION="${HOMEPAGE}/doc/docindex.html [[ lang = en ]]"
 
 LICENCES="BSD-3"
-DEPENDENCIES+="
+DEPENDENCIES="
     build+run+test:
         dev-java/junit:4
 "
@@ -67,10 +67,10 @@ javacc_src_prepare() {
     # JavaCC's several "build.xml" files actually hardcode a JUnit version
     # dependency. Cull, but note this is probably unsurprising giving the
     # project's... dormancy.
-    echo ">>> Patching build.xml files"
-    for BROKEN_BUILD_XML in \
+    local broken_build_xml
+    for   broken_build_xml in \
         "${ANT_BUILD_XML}" "src/org/javacc/parser/build.xml"; do
-        edo sed -e 's~lib/junit[0-9.]*/~lib/junit/~' -i "${BROKEN_BUILD_XML}"
+        edo sed -e 's~lib/junit[0-9.]*/~lib/junit/~' -i "${broken_build_xml}"
     done
 }
 
@@ -78,8 +78,8 @@ javacc_src_install() {
     antefix_src_install
 
     # Set absolute paths in a reasonably generic way. (See below.)
-    local JAVACC_JAR_FILE=$(which_installed_jar_file_for_this_exheres)
-    local JAVACC_BIN_DIR=$( which_installed_jar_dir_for_this_exheres)/"bin"
+    local javacc_jar_file=$(which_installed_jar_file_for_this_exheres)
+    local javacc_bin_dir=$( which_installed_jar_dir_for_this_exheres)/"bin"
 
     # JavaCC provides several convenience shell scripts for running various
     # Java class files in its installed jar file as command-line executables.
@@ -88,13 +88,12 @@ javacc_src_install() {
     #
     # Don't do this in "javacc_src_prepare" as "javacc.jar" will not have been
     # installed at that point.
-    echo ">>> Installing shell scripts"
-    local JAVACC_SHELL_SCRIPT
-    for   JAVACC_SHELL_SCRIPT in \
+    local javacc_shell_script
+    for   javacc_shell_script in \
         "bin/javacc" "bin/jjdoc" "bin/jjrun" "bin/jjtree"; do
-        edo sed -e "s~^JAR=.*$~JAR=\"${JAVACC_JAR_FILE}\"~" \
-            -i "${JAVACC_SHELL_SCRIPT}"
-        dobin  "${JAVACC_SHELL_SCRIPT}"
+        edo sed -e "s~^JAR=.*$~JAR=\"${javacc_jar_file}\"~" \
+            -i "${javacc_shell_script}"
+        dobin  "${javacc_shell_script}"
     done
 
     # Exherbo prefers an installation tree resembling:
@@ -115,11 +114,11 @@ javacc_src_install() {
     #     /usr/share/javacc/bin/jjtree
     #
     # Provide both by symlinking the former to the latter.
-    echo ">>> Installing canonical symlinks"
-    dodir                      "${JAVACC_BIN_DIR}/lib/"
-    dosym "${JAVACC_JAR_FILE}" "${JAVACC_BIN_DIR}/lib/"
-    for JAVACC_SHELL_SCRIPT in "javacc" "jjdoc" "jjrun" "jjtree"; do
-        dosym "/usr/bin/${JAVACC_SHELL_SCRIPT}" "${JAVACC_BIN_DIR}/"
+    dodir                      "${javacc_bin_dir}/lib/"
+    dosym "${javacc_jar_file}" "${javacc_bin_dir}/lib/"
+    local javacc_shell_script
+    for   javacc_shell_script in "javacc" "jjdoc" "jjrun" "jjtree"; do
+        dosym "/usr/bin/${javacc_shell_script}" "${javacc_bin_dir}/"
     done
 }
 

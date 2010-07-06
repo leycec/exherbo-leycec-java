@@ -25,7 +25,6 @@ UPSTREAM_CHANGELOG="${HOMEPAGE}/changes-report.html"
 LICENCES="Apache-2.0"
 
 WORK="${WORKBASE}"
-ANT_SRC_COMPILE_SOURCE_NAMESPACE_DIR="com"
 
 #FIXME leycec: compile against JDK 1.4 to avoid spurious warnings.
 qdox_src_unpack() {

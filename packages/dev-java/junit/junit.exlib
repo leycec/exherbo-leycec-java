@@ -12,9 +12,15 @@
 #   download. Rather ugly, but understandable.
 
 # ....................{ EXLIB                              }....................
+# Required by the JUnit 3.x.x exheres.
+myexparam -b create_build_xml=false
+
 # Do not require the "sourceforge" exlib, as this exheres overrides most
 # default globals supplied by that exlib.
-require antefix
+#
+# JUnit ships its source in an embedded jar file. Avoid cleaning jar files.
+require antefix [\
+    clean_jar_files=false create_build_xml=$(exparam create_build_xml) ]
 export_exlib_phases src_unpack
 
 # Relative path to the extracted jar file under "${WORK}" having source files
@@ -22,7 +28,7 @@ export_exlib_phases src_unpack
 #
 # This is not optional, since most JUnit slots embed a different jar file.
 myexparam archive_jar_file=
-JUNIT_ARCHIVE_JAR_FILE=$(exparam archive_jar_file)
+  exparam -v JUNIT_ARCHIVE_JAR_FILE archive_jar_file
 
 # ....................{ EXHERES                            }....................
 BUGS_TO="leycec@gmail.com"
@@ -51,9 +57,6 @@ DEPENDENCIES+="
     build:
         app-arch/unzip
 "
-
-# JUnit ships its source in an embedded jar file. Avoid cleaning jar files.
-JAVA_IS_CLEANING_JAR_FILES=
 
 # Absolute path to the root of the JUnit source tree.
 JUNIT_SRC_DIR="${WORK}/src/main/java"

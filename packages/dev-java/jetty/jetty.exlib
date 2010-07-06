@@ -2,7 +2,9 @@
 # Distributed under the terms of the GNU General Public License v2
 
 # FIXME leycec: require maven as well, once "exlibs/maven.exlib" is working.
-require javafix
+
+# This exheres installs pre-compiled jar files. Therefore, do not clean them.
+require javafix [ clean_jar_files=false ]
 export_exlib_phases src_install
 
 # Jetty 7.x.x and later are built somewhat differently from Jetty 6.x.x; thus,
@@ -24,9 +26,6 @@ DEPENDENCIES+="
         user/${PN}
         group/${PN}
 "
-
-# This exheres installs pre-compiled jar files. Therefore, do not clean them.
-JAVA_IS_CLEANING_JAR_FILES=
 
 # All Jetty slots install to the following path, at the moment.
 #
