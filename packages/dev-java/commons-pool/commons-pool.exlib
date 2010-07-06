@@ -1,0 +1,32 @@
+# Copyright 2010 Cecil Curry <leycec@gmail.com>
+# Distributed under the terms of the GNU General Public License v2
+# Based in part upon 'commons-cli-1.4.ebuild' from Gentoo, which is:
+#     Copyright 1999-2010 Gentoo Foundation
+
+require antefix apache-commons
+
+BUGS_TO="leycec@gmail.com"
+
+SUMMARY="Java object-pooling API."
+DESCRIPTION="
+Commons Pool is a Java object-pooling API, providing:
+
+   1. A generic object pool interface that clients and implementors can use to
+      provide easily interchangable pooling implementations.
+   2. A toolkit for creating modular object pools.
+   3. Several general purpose pool implementations.
+"
+
+UPSTREAM_DOCUMENTATION="${HOMEPAGE}/api-${PV} [[ lang = en ]]"
+
+DEPENDENCIES+="
+    test:
+        dev-java/junit:4
+"
+
+ANT_SRC_CONFIGURE_PARAMS=( init )
+ANT_SRC_COMPILE_PARAMS=( compile )
+ANT_TEST_PARAMS=( test )
+ANT_SRC_INSTALL_PARAMS=( build-jar )
+JAVA_SRC_INSTALL_JARS=( "${APACHE_COMMONS_DIST_DIR}/${PN}.jar" )
+
