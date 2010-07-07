@@ -21,15 +21,13 @@ ${MY_DOWNLOADS_HOME}/${PNV}-src.tar.gz
 ${MY_DOWNLOADS_HOME}/${PNV}.build.xml
 "
 
-SLOT="1"
 LICENCES="as-is"
 
 WORK="${WORKBASE}/${PN}"
 
-ANT_PARAMS=( -Dversion=${PV} )
-
 # Do not call the "compile" task, as that causes recompilation when calling the
 # "jar" task. (Go straight for the throat.)
+ANT_PARAMS=( -Dversion=${PV} )
 ANT_SRC_CONFIGURE_PARAMS=( init )
 ANT_SRC_COMPILE_PARAMS=( jar )
 JAVA_SRC_INSTALL_JARS=( "${PNV}.jar" )

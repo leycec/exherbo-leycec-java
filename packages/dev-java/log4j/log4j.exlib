@@ -4,7 +4,7 @@
 # Log4j does not use an Apache-compliant URL scheme. It just mostly complies.
 require antefix apache [ \
     pn="logging"        homepage_subdir="${PN}" \
-    pnv="apache-${PNV}" download_subdir="${PN}/${PV}" ]
+    pnv="apache-${PNV}" download_subdir="${PN}/${PV}" suffix="tar.gz" ]
 
 BUGS_TO="leycec@gmail.com"
 

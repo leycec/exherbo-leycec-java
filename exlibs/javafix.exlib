@@ -494,23 +494,32 @@ symlink_jars() {
 # elsewhere without concern for specific versions they represent. This resembles:
 #
 #   cp "$filename1" "$filename2" ... "${IMAGE}/${JAVA_SRC_INSTALL_JARS_IMAGE_DIR}"
+#
+# Note that this function always installs the passed jar file to filename
+# "${PN}.jar" when passed merely one jar file. This improves jar filename
+# uniformity, and is almost always beneficial.
 javafix_install_jars() {
     illegal_in_global_scope
     [[ ${#} -ge 1 ]] || die_unless_nonfatal "at least one argument needed"
 
-    local      JAR_DIR_TARGET=$(which_installed_jar_dir_for_this_exheres)
-    insinto "${JAR_DIR_TARGET}"
+    local      jar_dir_target=$(which_installed_jar_dir_for_this_exheres)
+    insinto "${jar_dir_target}"
 
-    local JAR_FILE_SOURCE JAR_FILE_TARGET
-    for   JAR_FILE_SOURCE in "${@}"; do
+    local jar_file_source jar_file_target
+    for   jar_file_source in "${@}"; do
+        # If this is the only jar file to be installed, enforce uniformity.
+        if [[ ${#} -eq 1 ]]
+        then jar_file_target="${PN}.jar"
         # Strip versions from filenames: e.g., convert "zebrapig-0.42.jar" to
         # "zebrapig.jar". The pattern substitution requires the bash "extglob"
         # shell option be enabled, which it is under exheres-0.
         #
         # See "man bash" for details.
-        JAR_FILE_TARGET=$(basename "${JAR_FILE_SOURCE/${JAVA_JAR_PARAMETER_VERSION_PATTERN}/.jar}")
-        echo "cp ${JAR_FILE_SOURCE} ${JAR_DIR_TARGET}/${JAR_FILE_TARGET}"
-        newins  "${JAR_FILE_SOURCE}" "${JAR_FILE_TARGET}"
+        else jar_file_target=$(basename "${jar_file_source/${JAVA_JAR_PARAMETER_VERSION_PATTERN}/.jar}")
+        fi
+
+        echo "cp ${jar_file_source} ${jar_dir_target}/${jar_file_target}"
+        newins  "${jar_file_source}" "${jar_file_target}"
     done
 }
 

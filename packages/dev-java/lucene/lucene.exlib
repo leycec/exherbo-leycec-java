@@ -4,7 +4,7 @@
 #     Copyright 1999-2010 Gentoo Foundation
 
 # Lucene extracts to the usual directory -- not the usual Apache directory.
-require antefix apache [ download_subdir="java" work="${PNV}" ]
+require antefix apache [ download_subdir="java" work="${PNV}" suffix="tar.gz" ]
 export_exlib_phases pkg_setup src_prepare src_compile src_install
 
 BUGS_TO="leycec@gmail.com"

@@ -8,7 +8,7 @@
 # ....................{ EXLIB                              }....................
 require antefix apache [ \
     download_subdir="tomcat-$(ever range 1)/v${PV}/src" \
-    pnv="apache-${PNV}-src" ]
+    pnv="apache-${PNV}-src" suffix="tar.gz" ]
 export_exlib_phases src_unpack src_prepare
 
 # Absolute or relative path to this Tomcat slot's "build.xml" directory. This is

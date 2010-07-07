@@ -37,14 +37,14 @@ ANT_PARAMS+=(
 ANT_SRC_COMPILE_PARAMS=( build )
 ANT_SRC_INSTALL_PARAMS=( jars )
 
+# JUnit creates various jar files, of which we ignore all except the
+# "${PN}-dep-${PV}.jar" jar file having no external dependencies.
+JAVA_SRC_INSTALL_JARS=( "${JUNIT_DIST_DIR}/${PN}-dep-${PV}.jar" )
+
 DEFAULT_SRC_INSTALL_EXTRA_DOCS=( "doc/ReleaseNotes${PV}.txt" )
 
 src_install() {
     antefix_src_install
-
-    # JUnit creates various jar files, of which we ignore all except the
-    # "${PN}-dep-${PV}.jar" jar file having no external dependencies.
-    javafix_install_jar_as "${JUNIT_DIST_DIR}/${PN}-dep-${PV}.jar" "${PN}.jar"
 
     # Restructure the JUnit documentation tree so as to place all HTML
     # documentation under a new "/usr/share/doc/${PN}/html/" path.

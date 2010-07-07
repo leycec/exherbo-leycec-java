@@ -14,7 +14,7 @@
 
 # ....................{ EXLIB                              }....................
 require antefix
-export_exlib_phases src_unpack src_install
+export_exlib_phases src_unpack
 
 # BioJava SVN revision corresponding to the download URI, below.
 myexparam svn_revision=
@@ -41,16 +41,12 @@ WORK="${WORKBASE}/${MY_PNV}"
 ANT_SRC_CONFIGURE_PARAMS=( prepare-core )
 ANT_SRC_COMPILE_PARAMS=( compile )
 ANT_SRC_INSTALL_PARAMS=( package )
+JAVA_SRC_INSTALL_JARS=( "ant-build/bytecode.jar" )
 
 biojava-bytecode_src_unpack() {
     antefix_src_unpack
 
     # BioJava bytecode requires... yes, that's right, empty directories.
     edo mkdir "${WORK}"/{tests,demos,resources}
-}
-
-biojava-bytecode_src_install() {
-    antefix_src_install
-    javafix_install_jar_as "ant-build/bytecode.jar" "${PN}.jar"
 }
 
