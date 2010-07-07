@@ -1,0 +1,59 @@
+# Copyright 2010 Cecil Curry <leycec@gmail.com>
+# Distributed under the terms of the GNU General Public License v2
+
+# ....................{ EXLIB                              }....................
+# See the "java-net" exlib for details.
+myexparam pv_id=
+
+require antefix java-net [ \
+    pn_id=4480 pv_id=$(exparam pv_id) suffix="tar.gz" ]
+export_exlib_phases src_prepare
+
+# ....................{ EXHERES                            }....................
+BUGS_TO="leycec@gmail.com"
+
+SUMMARY="Java extension complementing the JSR-173 StAX API"
+DESCRIPTION="
+StAX-Ex is a Java extension complementing the JSR-173 StAX API. Its mission is
+to:
+
+   1. Enable parser instance reuse (which is important in the high-performance
+      environment like JAXB and JAX-WS).
+   2. Improve the support for reading from non-text XML infoset, such as
+      FastInfoset.
+   3. Improve the namespace support. 
+"
+
+UPSTREAM_DOCUMENTATION="${HOMEPAGE}/nonav/maven/apidocs [[ lang = en ]]"
+LICENCES="|| ( CDDL-1.0 GPL-2 )"
+
+DEPENDENCIES="
+    test:
+        dev-java/junit:4
+"
+
+# StAX-Ex's "build.xml" defaults libdir to "~/.maven/repository", then attempts
+# to create that directory. This is bad; so, set a saner default.
+ANT_PARAMS=( -Dlibdir="lib" )
+
+ANT_SRC_CONFIGURE_PARAMS=( init )
+ANT_SRC_COMPILE_PARAMS=( compile )
+ANT_SRC_TEST_PARAMS=( test )
+ANT_SRC_INSTALL_PARAMS=( jar )
+
+JAVA_SRC_LIBRARY_DIR="lib"
+JAVA_SRC_TEST_JARS=( "junit:4" )
+JAVA_SRC_INSTALL_JARS=( "target/${PNV}.jar" )
+
+stax-ex_src_prepare() {
+    antefix_src_prepare
+
+    # StAX-Ex's "build.xml" requires this directory, but never creates it.
+    edo mkdir "${WORK}/src/resources"
+
+    # StAX-Ex's "build.xml" sets unfortunate task dependencies. Remove them.
+    edo sed -e 's~depends="get-deps"~~' \
+            -e 's~depends="compile,test"~depends="compile"~' \
+            -i "${ANT_BUILD_XML}"
+}
+
