@@ -1,0 +1,46 @@
+# Copyright 2010 Cecil Curry <leycec@gmail.com>
+# Distributed under the terms of the GNU General Public License v2
+# Based in part upon 'commons-codec-1.4.ebuild' from Gentoo, which is:
+#     Copyright 1999-2010 Gentoo Foundation
+
+require antefix apache-commons
+
+BUGS_TO="leycec@gmail.com"
+
+SUMMARY="Java provider of common collection classes"
+DESCRIPTION="
+Apache Commons Collections builds upon the JDK collection classes by providing
+new interfaces, implementations and utilities. These include:
+
+    * Bag interface for collections that have a number of copies of each object
+    * Buffer interface for collections that have a well defined removal order,
+      like FIFOs
+    * BidiMap interface for maps that can be looked up from value to key as well
+      and key to value
+    * MapIterator interface to provide simple and quick iteration over maps
+    * Type checking decorators to ensure that only instances of a certain type
+      can be added
+    * Transforming decorators that alter each object as it is added to the
+      collection
+    * Composite collections that make multiple collections look like one
+    * Ordered maps and sets that retain the order elements are added in,
+      including an LRU based map
+    * Identity map that compares objects based on their identity (==) instead of
+      the equals method
+    * Reference map that allows keys and/or values to be garbage collected under
+      close control
+    * Many comparator implementations
+    * Many iterator implementations
+    * Adapter classes from array and enumerations to collections
+    * Utilities to test or create typical set-theory properties of collections
+      such as union, intersection, and closure
+"
+
+UPSTREAM_DOCUMENTATION="${HOMEPAGE}/api-${PV} [[ lang = en ]]"
+UPSTREAM_RELEASE_NOTES="${HOMEPAGE}/release_$(ever replace_all _).html [[ lang = en ]]"
+
+ANT_SRC_CONFIGURE_PARAMS=( prepare )
+ANT_SRC_COMPILE_PARAMS=( compile )
+ANT_SRC_INSTALL_PARAMS=( jar )
+JAVA_SRC_INSTALL_JARS=( "build/${PN}.jar" )
+
