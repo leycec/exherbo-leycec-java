@@ -1,0 +1,51 @@
+# Copyright 2010 Cecil Curry <leycec@gmail.com>
+# Distributed under the terms of the GNU General Public License v2
+#
+# --------------------( SYNOPSIS                           )--------------------
+# This exlib gives sane defaults for java.net-hosted exheres.
+
+# ....................{ EXLIB                              }....................
+# Numeric identifier uniquely identifying this exheres name for download from
+# "http://java.net". (See the example below.)
+myexparam pn_id=
+
+# Numeric identifier uniquely identifying this exheres version for download from
+# "http://java.net". For example, "javacc-5.0" downloads from:
+#
+#     https://javacc.dev.java.net/files/documents/17/142527/javacc-5.0src.tar.gz
+#
+# The "17" refers to Javacc, while the "142527" refers to version 5.0 of Javacc.
+# So, "javacc-5.0.exheres-0" requires this exlib like so:
+#
+#     require java-net [ pn_id=17 pv_id=142527 ]
+myexparam pv_id=
+
+# java.net-specific exheres name, version, and source tarball suffix.
+myexparam pn=${MY_PN:-${PN}}
+  exparam -v JAVANET_PN pn
+myexparam pv=${MY_PV:-${PV}}
+  exparam -v JAVANET_PV pv
+myexparam pnv=${MY_PNV:-${JAVANET_PN}-${JAVANET_PV}-src}
+  exparam -v JAVANET_PNV pnv
+myexparam suffix="tar.bz2"
+  exparam -v JAVANET_SUFFIX suffix
+
+# ....................{ EXHERES GLOBALS                    }....................
+HOMEPAGE="https://${JAVANET_PN}.dev.java.net"
+DOWNLOADS="${HOMEPAGE}/files/documents/$(exparam pn_id)/$(exparam pv_id)/${JAVANET_PNV}.${JAVANET_SUFFIX}"
+
+#FIXME: Uncomment after adding a java.net ${REMOTE_IDS} resolver.
+#REMOTE_IDS+=" apache:${JAVANET_PN} "
+
+# Add buildtime dependencies appropriate for extracting this archive.
+case "${JAVANET_SUFFIX}" in
+    tar.lzma|tar.xz)
+        DEPENDENCIES+="
+    build:
+        app-arch/xz" ;;
+    zip)
+        DEPENDENCIES+="
+    build:
+        app-arch/unzip" ;;
+esac
+
