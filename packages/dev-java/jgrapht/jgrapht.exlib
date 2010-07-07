@@ -1,0 +1,60 @@
+# Copyright 2010 Cecil Curry <leycec@gmail.com>
+# Distributed under the terms of the GNU General Public License v2
+
+require antefix sourceforge [ suffix=tar.gz ]
+export_exlib_phases src_unpack
+
+BUGS_TO="leycec@gmail.com"
+
+SUMMARY="Java graph library providing graph-theory objects and algorithms"
+DESCRIPTION="
+JGraphT is a free Java graph library providing mathematical graph-theory objects
+and algorithms. It supports various types of graphs, including:
+
+    * directed and undirected graphs.
+    * graphs with weighted / unweighted / labeled or any user-defined edges.
+    * various edge multiplicity options, including: simple-graphs, multigraphs, pseudographs.
+    * unmodifiable graphs - allow modules to provide "read-only" access to internal graphs.
+    * listenable graphs - allow external listeners to track modification events.
+    * subgraphs graphs that are auto-updating subgraph views on other graphs.
+    * all compositions of above graphs.
+
+Although powerful, JGraphT is designed to be simple and type-safe (via Java
+generics). For example, graph vertices can be of any objects. You can create
+graphs based on: Strings, URLs, XML documents, etc; you can even create graphs
+of graphs! Other features offered by JGraphT include:
+
+    * graph visualization using the JGraph library.
+    * complete source code included, under the terms of the GNU Lesser General Public License.
+    * comprehensive Javadocs.
+    * easy extensibility.
+"
+
+HOMEPAGE="https://www.${PN}.org"
+UPSTREAM_DOCUMENTATION="${HOMEPAGE}/javadoc [[ lang = en ]]"
+
+LICENCES="LGPL-2.1"
+DEPENDENCIES="
+    build+run:
+        dev-java/jgraph:5
+"
+
+# JGraphT's "build.xml" defines a JDK version-dependent JAR filename by default.
+# Substitute that with a sensible JAR filename.
+ANT_PARAMS=( -Dproject.jar.name="${PN}.jar" )
+
+ANT_SRC_CONFIGURE_PARAMS=( init )
+ANT_SRC_COMPILE_PARAMS=( compile )
+ANT_SRC_INSTALL_PARAMS=( jar )
+
+JAVA_SRC_LIBRARY_DIR="lib"
+JAVA_SRC_PREPARE_JARS=( "jgraph:5" )
+JAVA_SRC_INSTALL_JARS=( "${PN}.jar" )
+
+jgrapht_src_unpack() {
+    antefix_src_unpack
+
+    # Remove Touchgraph integration code. Exherbo currently has no such exheres.
+    edo rm -rf "${WORK}/src/org/jgrapht/experimental/touchgraph"
+}
+
