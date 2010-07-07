@@ -1,0 +1,17 @@
+# Copyright 2009 Elias Pipping <pipping@exherbo.org>
+# Distributed under the terms of the GNU General Public License v2
+
+SUMMARY="Java Transaction API (JTA)"
+HOMEPAGE="http://java.sun.com/javaee/technologies/${PN}/index.jsp"
+
+LICENCES="as-is"
+SLOT="1.1"
+PLATFORMS="~amd64 ~x86"
+
+DEPENDENCIES="
+    build+run: || (
+        dev-java/apache-geronimo-jta:1.1
+        dev-java/btm:2
+    )
+"
+
