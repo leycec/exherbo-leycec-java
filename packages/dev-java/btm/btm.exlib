@@ -1,0 +1,59 @@
+# Copyright 2010 Cecil Curry <leycec@gmail.com>
+# Distributed under the terms of the GNU General Public License v2
+
+#FIXME: This exlib is currently broken. It requires dependencies as listed at:
+#    http://svn.codehaus.org/btm/branches/2.0.0/lib/
+
+require antefix
+export_exlib_phases src_unpack src_prepare
+
+BUGS_TO="leycec@gmail.com"
+
+SUMMARY="Free implementation of the Java Transaction API (JTA)"
+DESCRIPTION="
+The Bitronix Transaction Manager (BTM) is a simple but complete implementation
+of the Java Transaction API (JTA).  It is a fully working XA transaction manager
+that provides all services required by the JTA API, while trying to keep the
+code as simple as possible for easier understanding of the XA semantics.
+"
+
+MY_HOMEPAGE="http://docs.codehaus.org/display/BTM"
+MY_PNV="${PN}-dist-${PV}"
+
+HOMEPAGE="${MY_HOMEPAGE}/Home"
+# BTM does not supply a "build.xml" with its distribution. Instead, we
+# retrieve it from the above SVN repository over HTTP, then copy it in.
+DOWNLOADS="
+http://www.bitronix.be/downloads/${MY_PNV}.zip
+http://svn.codehaus.org/${PN}/branches/${PV}/build.xml -> ${PNV}.build.xml
+"
+UPSTREAM_DOCUMENTATION="${HOMEPAGE}/doc/docindex.html [[ lang = en ]]"
+UPSTREAM_CHANGELOG="${MY_HOMEPAGE}/Download [[ lang = en ]]"
+
+SLOT="2"
+LICENCES="LGPL-3"
+DEPENDENCIES="
+    build+test:
+        dev-java/junit:4
+"
+
+WORK="${WORKBASE}/${MY_PNV}"
+
+# BTM's "build.xml" melds compilation and jaring into one task.
+ANT_SRC_INSTALL_PARAMS=( build )
+JAVA_SRC_INSTALL_JARS=( "dist/${PNV}.jar" )
+
+btm_src_unpack() {
+    antefix_src_unpack
+    cp "${FETCHEDDIR}/${PNV}.build.xml" "${WORK}/build.xml"
+}
+
+btm_src_prepare() {
+    antefix_src_prepare
+
+    # BTM's "build.xml" depends on "build-codehaus.xml", but only to automate
+    # uploading of files to its homepage. Remove this "dependency."
+    edo sed -e '/build-codehaus\.xml/d' \
+            -i "build.xml"
+}
+
