@@ -1,0 +1,56 @@
+# Copyright 2010 Cecil Curry <leycec@gmail.com>
+# Distributed under the terms of the GNU General Public License v2
+# Based in part upon 'biojava-bytecode-20081007.ebuild' from Gentoo, which is:
+#     Copyright 1999-2010 Gentoo Foundation
+#
+# --------------------( SYNOPSIS                           )--------------------
+# This exlib is a wholesale conversion of the above Gentoo ebuild.
+#
+# This exlib's author(s) gratefully thank that ebuild's author(s) for their
+# continued hosting of the download URI, which they manually exported from the
+# BioJava SVN repository: e.g.,
+#
+#     svn export svn://code.open-bio.org/biojava/bytecode/trunk -r 20081007
+
+# ....................{ EXLIB                              }....................
+require antefix
+export_exlib_phases src_unpack src_install
+
+# BioJava SVN revision corresponding to the download URI, below.
+myexparam svn_revision=
+  exparam -v MY_SVN_REVISION svn_revision
+
+# BioJava bytecode name and version, using this SVN revision.
+MY_PNV="bytecode-${MY_SVN_REVISION}"
+
+# ....................{ EXHERES                            }....................
+BUGS_TO="leycec@gmail.com"
+
+SUMMARY="BioJava bytecode manipulation library"
+DESCRIPTION="
+BioJava bytecode is a BioJava-specific bytecode manipulation library, needed by
+BioJava at runtime.
+"
+
+HOMEPAGE="http://biojava.org"
+DOWNLOADS="http://dev.gentoo.org/~serkan/distfiles/${MY_PNV}.tar.bz2"
+LICENCES="LGPL-2.1"
+
+WORK="${WORKBASE}/${MY_PNV}"
+
+ANT_SRC_CONFIGURE_PARAMS=( prepare-core )
+ANT_SRC_COMPILE_PARAMS=( compile )
+ANT_SRC_INSTALL_PARAMS=( package )
+
+biojava-bytecode_src_unpack() {
+    antefix_src_unpack
+
+    # BioJava bytecode requires... yes, that's right, empty directories.
+    edo mkdir "${WORK}"/{tests,demos,resources}
+}
+
+biojava-bytecode_src_install() {
+    antefix_src_install
+    javafix_install_jar_as "ant-build/bytecode.jar" "${PN}.jar"
+}
+

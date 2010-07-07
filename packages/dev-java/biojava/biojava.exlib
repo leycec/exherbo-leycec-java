@@ -1,0 +1,70 @@
+# Copyright 2010 Cecil Curry <leycec@gmail.com>
+# Distributed under the terms of the GNU General Public License v2
+
+require antefix
+export_exlib_phases src_prepare
+
+BUGS_TO="leycec@gmail.com"
+
+SUMMARY="Java sourcecode generator for parsing formal grammars"
+DESCRIPTION="
+JavaCC, the Java Compiler Compiler, is an open-source parser generator for the
+Java programming language. It's similar to Yacc in that it generates a parser
+for a formal grammar provided in EBNF notation, except the output is Java source
+code. Unlike Yacc, however, JavaCC generates top-down parsers. This limits it to
+the LL(k) class of grammars and, in particular, prevents use of left recursion.
+"
+
+# Exheres version without version separators.
+MY_PV_COMPACT=$(ever delete_all)
+MY_PNV="${PNV}-src"
+
+HOMEPAGE="http://${PN}.org"
+DOWNLOADS="${HOMEPAGE}/download/bj${MY_PV_COMPACT}/src/${MY_PNV}.jar"
+UPSTREAM_DOCUMENTATION="${HOMEPAGE}/docs/api${MY_PV_COMPACT} [[ lang = en ]]"
+
+LICENCES="LGPL-2.1"
+DEPENDENCIES="
+    build+run:
+        dev-java/biojava-bytecode:${SLOT}[>=${PV}]
+        dev-java/commons-cli:1
+        dev-java/commons-dbcp:1
+        dev-java/commons-pool:1
+        dev-java/commons-collections:3
+        dev-java/jgrapht:0
+    build+test:
+        dev-java/junit:4
+"
+
+WORK="${WORKBASE}/${MY_PNV}"
+
+# Build both the core BioJava API and standalone BioJava applications.
+ANT_SRC_CONFIGURE_PARAMS=( prepare-biojava prepare-apps )
+ANT_SRC_COMPILE_PARAMS=( compile-biojava compile-apps )
+ANT_SRC_TEST_PARAMS=( runtests )
+ANT_SRC_INSTALL_PARAMS=( package-biojava package-apps )
+JAVA_SRC_INSTALL_JARS=( "ant-build/"{${PN},apps}.jar )
+
+biojava_src_prepare() {
+    antefix_src_prepare
+
+    # BioJava's "build.xml" hardcodes an unfriendly classpath. Replace it with a
+    # classpath having absolute paths to all JAR dependencies.
+    local biojava_jar_dependency biojava_jar_dependencies biojava_classpath
+    biojava_jar_dependencies=(
+         "biojava-bytecode:1"
+         "commons-cli:1"
+         "commons-dbcp:1"
+         "commons-pool:1"
+         "commons-collections:3"
+         "jgrapht:0"
+         "junit:4"
+    )
+    for biojava_jar_dependency in "${biojava_jar_dependencies[@]}"; do
+        biojava_classpath+=':'$(which_installed_jar_file "${biojava_jar_dependency}")
+    done
+
+    edo sed -e 's~"bytecode\.jar.*$~"'"${biojava_classpath}"'"/>~' \
+            -i "${ANT_BUILD_XML}"
+}
+

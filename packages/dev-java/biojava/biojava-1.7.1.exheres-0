@@ -1,0 +1,10 @@
+# Copyright 2010 Cecil Curry <leycec@gmail.com>
+# Distributed under the terms of the GNU General Public License v2
+
+# Declare the slot prior to including the "biojava" exlib, as that exlib
+# requires it.
+SLOT="1"
+require biojava
+
+PLATFORMS="~amd64 ~x86"
+
