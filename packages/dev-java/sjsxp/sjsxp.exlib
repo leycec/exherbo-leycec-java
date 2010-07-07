@@ -1,0 +1,50 @@
+# Copyright 2010 Cecil Curry <leycec@gmail.com>
+# Distributed under the terms of the GNU General Public License v2
+# Based in part upon 'sjsxp-1.0.1-r1.ebuild' from Gentoo, which is:
+#     Copyright 1999-2009 Gentoo Foundation
+#
+# --------------------( SYNOPSIS                           )--------------------
+# This exlib is a wholesale conversion of the above Gentoo ebuild.
+#
+# This exlib's author(s) gratefully thank that ebuild's author(s) for their
+# continued hosting of the download URI, which they manually exported from the
+# SJXSP CVS repository: e.g.,
+#
+#     cvs -d :pserver:guest@cvs.dev.java.net:/cvs checkout -r sjsxp-1_0_1 sjsxp/zephyr
+
+require antefix
+
+BUGS_TO="leycec@gmail.com"
+
+SUMMARY="Java implementation of the StAX API"
+DESCRIPTION="
+The Sun Java Streaming XML Parser (SJSXP) is an efficient implementation of the
+StAX API and is fully compliant with the XML 1.0 and Namespace 1.0
+specifications.
+"
+
+HOMEPAGE="http://${PN}.dev.java.net/"
+DOWNLOADS="mirror://gentoo/${PNV}.tar.bz2"
+LICENCES="BEA-RI-JSR-173"
+
+#FIXME: Enable JUnit tests. This requires additional dependencies: e.g.,
+#"package com.sun.xml.stream does not exist".
+#DEPENDENCIES="
+#    test:
+#        dev-java/junit:4
+#"
+
+# Don't ask.
+WORK="${WORKBASE}/zephyr"
+
+# SJSXP's "build.xml" recompiles sources in the "jar" task irregardless of
+# whether the "compile" task has already compiled them. Do not run the
+# "compile" task, therefore. 
+ANT_SRC_CONFIGURE_PARAMS=( prepare-src )
+#ANT_SRC_TEST_PARAMS=( run-unit-tests )
+ANT_SRC_INSTALL_PARAMS=( jar )
+
+#JAVA_SRC_LIBRARY_DIR="lib"
+#JAVA_SRC_TEST_JARS=( "junit:4" )
+JAVA_SRC_INSTALL_JARS=( "build/${PN}.jar" )
+
