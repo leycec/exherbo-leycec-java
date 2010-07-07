@@ -1,6 +1,7 @@
 # Copyright 2010 Cecil Curry <leycec@gmail.com>
 # Distributed under the terms of the GNU General Public License v2
 
+#FIXME: This is terrible. Replace with a "create_build_xml"-style antefix build.
 require maven [ is_offline=false ] httpcomponents-client
 
 # HttpClient 4.x.x significantly breaks backwards compatibility. In fact, it's
@@ -14,7 +15,7 @@ DEPENDENCIES="
     build+run:
         dev-java/commons-codec:1[>=1.4]
         dev-java/commons-logging:1[>=1.1.1]
-    build+test:
+    test:
         dev-java/junit:4
 "
 

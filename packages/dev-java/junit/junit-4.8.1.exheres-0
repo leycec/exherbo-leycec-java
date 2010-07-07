@@ -29,7 +29,7 @@ JAVA_SRC_LIBRARY_DIR="lib"
 JAVA_SRC_PREPARE_JARS=( "hamcrest:1 hamcrest-core" )
 
 # JUnit needs to be hand-held, a bit; explicitly tell it where hamcrest lives.
-ANT_PARAMS=(
+ANT_PARAMS+=(
     -Ddist="${JUNIT_DIST_DIR}"
     -Dhamcrestlib="${JAVA_SRC_LIBRARY_DIR}/hamcrest-core.jar"
 )
@@ -44,27 +44,25 @@ src_install() {
 
     # JUnit creates various jar files, of which we ignore all except the
     # "${PN}-dep-${PV}.jar" jar file having no external dependencies.
-    echo ">>> Installing jar file"
     javafix_install_jar_as "${JUNIT_DIST_DIR}/${PN}-dep-${PV}.jar" "${PN}.jar"
 
     # Restructure the JUnit documentation tree so as to place all HTML
     # documentation under a new "/usr/share/doc/${PN}/html/" path.
     if option doc; then
-        JUNIT_DOCUMENT_DIR="${WORK}/doc/"
-        JUNIT_JAVADOC_DIR="${WORK}/javadoc/"
+        local junit_document_dir="${WORK}/doc/"
+        local junit_javadoc_dir="${WORK}/javadoc/"
 
         # First, remove all non-HTML documents.
-        edo rm "${JUNIT_DOCUMENT_DIR}"/*.{sh,txt}
+        edo rm "${junit_document_dir}"/*.{sh,txt}
 
         # Next, install all HTML documents.
         docinto html
-        dodoc "${JUNIT_DOCUMENT_DIR}"/*
+        dodoc "${junit_document_dir}"/*
         docinto html/javadoc
-        dodoc "${JUNIT_JAVADOC_DIR}"/*
+        dodoc "${junit_javadoc_dir}"/*
     fi
 
     if option examples; then
-        echo ">>> Installing examples"
         docinto examples
         dodoc "${WORK}/org/junit/samples"/*
     fi

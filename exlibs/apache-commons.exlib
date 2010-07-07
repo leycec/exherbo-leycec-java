@@ -78,12 +78,13 @@ apache-commons_src_prepare() {
     antefix_src_prepare
 
     ANT_PARAMS+=(
-        # We can't call the "option" function in global scope above. Do it now.
         "-Dcompile.debug="$(option debug && echo true || echo false)
 
-        # The "build.xml" file for most Apache Commons exheres accepts this
-        # property, permitting us to force the output jar file directory.
+        # The "build.xml" file for most Apache Commons exheres accepts these two
+        # properties, permitting us to set the output jar file directory and
+        # basename.
         "-Ddist.home=${APACHE_COMMONS_DIST_DIR}"
+        "-Dfinal.name=${PN}"
     )
 
     # Most Apache Commons exheres ship a "build.properties.sample" file that,

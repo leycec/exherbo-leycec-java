@@ -37,7 +37,7 @@ UPSTREAM_DOCUMENTATION="${HOMEPAGE}/doc/docindex.html [[ lang = en ]]"
 
 LICENCES="BSD-3"
 DEPENDENCIES="
-    build+test:
+    test:
         dev-java/junit:4
 "
 
@@ -48,16 +48,25 @@ WORK="${WORKBASE}/${PN}"
 # there's not much we can do.
 JAVA_CLEAN_JAR_FILES_PARAMS=( -not -name 'javacc.jar' )
 JAVA_SRC_LIBRARY_DIR="lib/junit"
-JAVA_SRC_PREPARE_JARS=( "junit:4" )
+JAVA_SRC_TEST_JARS=( "junit:4" )
 JAVA_SRC_INSTALL_JARS=( "bin/lib/${PN}.jar" )
 
-# Note that, though the "compile" task compiles "*Test.java" files the "jar"
+# Do not run the "compile" task in the src_compile phase. Why? Because the
+# "test" task, if run, compiles all source using different compilation flags
+# than are used during the conventional "compile" task. Instead, do the
+# following:
+#
+# * If running the "test" task, run the "clean" task immediately after. This
+#   ensures that the next task recompiles all source using conventional flags.
+# * Run the "jar" task. This implicitly runs the "compile" task, as well.
+#
+# Note that, though the "compile" task compiles "*Test.java" files, the "jar"
 # task does not actually jar them. (Good enough for us.)
 #
 # Note also that this task complains several times about "Token.java" being a
 # deprecated file. Do not remove these files, however! Compilation dies under
 # non-deprecated versions of this file. Hurk, spu-urk.
-ANT_SRC_COMPILE_PARAMS=( compile )
+ANT_SRC_TEST_PARAMS=( test clean )
 ANT_SRC_INSTALL_PARAMS=( jar )
 
 # ....................{ PHASES                             }....................

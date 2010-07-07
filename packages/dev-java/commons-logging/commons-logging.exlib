@@ -32,21 +32,16 @@ MYOPTIONS="
 # working Tomcat slot as of this writing.
 DEPENDENCIES="
     build+run:
-        log4j?  ( dev-java/log4j:1[>=1.2.16] )
         dev-java/tomcat:6[>=6.0.26]
+        log4j?  ( dev-java/log4j:1[>=1.2.16] )
+    build+test:
+        dev-java/junit:4
 "
-
-# Common Logging's "build.xml" appends "-SNAPSHOT" to its version numbers. Noo!
-# It also produces jar files under "${build.home}" rather than the usual
-# "${dist.home}". Thus, just set the former to the latter.
-ANT_PARAMS=(
-    -Dcomponent.version="${PV}"
-    -Dbuild.home="${APACHE_COMMONS_DIST_DIR}"
-)
 
 # The "compile" task both compiles and jars. So, we're done.
 ANT_SRC_CONFIGURE_PARAMS=( static )
 ANT_SRC_COMPILE_PARAMS=( compile )
+ANT_SRC_TEST_PARAMS=( test )
 
 # Install "commons-logging.jar" with an Eclipse-compatible OSGi manifest. But
 # install the other two jar files as is -- Eclipse does not require them.
@@ -62,8 +57,13 @@ commons-logging_src_prepare() {
 
     # Commons Logging ships a not very helpful "build.properties.sample" file.
     # Brush off that file and create our own "build.properties" file by hand.
-    echo ">>> Creating build.properties"
+    #
+    # Common Logging's "build.xml" appends "-SNAPSHOT" to its version numbers.
+    # It also produces jar files under "${build.home}" rather than the usual
+    # "${dist.home}". (Fix both.)
     edo cat <<EOF > "build.properties" 
+component.version=${PV}
+build.home=${APACHE_COMMONS_DIST_DIR}
 junit.jar=$(which_installed_jar_file "junit:4")
 servletapi.jar=$(which_installed_jar_file "tomcat:6" "servlet-api")
 EOF

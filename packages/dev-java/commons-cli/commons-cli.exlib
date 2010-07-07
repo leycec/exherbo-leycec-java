@@ -18,7 +18,7 @@ UPSTREAM_RELEASE_NOTES="${HOMEPAGE}/release_$(ever replace_all _).html [[ lang =
 
 #FIXME: Add "junit" support to "create_build_xml" functionality in antefix.
 #DEPENDENCIES="
-#    test:
+#    build+test:
 #        dev-java/junit:4
 #"
 

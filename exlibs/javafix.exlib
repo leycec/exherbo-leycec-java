@@ -722,7 +722,7 @@ which_installed_jar_file_nonfatal() {
 # is usually called from the "src_install" phase prior to creation of the path.
 which_installed_jar_dir_for_this_exheres() {
     [[ ${#} -eq 0 ]] || die_unless_nonfatal "no arguments needed"
-    which_installed_jar_dir_nonfatal $(get_java_exheres_name_for_this_exheres)
+    which_installed_jar_dir_nonfatal $(javafix_get_exheres_name_for_this_exheres)
 }
 
 # char *which_installed_jar_file_for_this_exheres(void)
@@ -741,14 +741,14 @@ which_installed_jar_dir_for_this_exheres() {
 # is usually called from the "src_install" phase prior to creation of the file.
 which_installed_jar_file_for_this_exheres() {
     [[ ${#} -eq 0 ]] || die_unless_nonfatal "no arguments needed"
-    which_installed_jar_file_nonfatal $(get_java_exheres_name_for_this_exheres)
+    which_installed_jar_file_nonfatal $(javafix_get_exheres_name_for_this_exheres)
 }
 
-# char *get_java_exheres_name_for_this_exheres(void)
+# char *javafix_get_exheres_name_for_this_exheres(void)
 #
 # Return this exheres name optionally suffixed by this exheres slot, if given.
 # This is a utility function called by the "*_for_this_exheres" functions above.
-get_java_exheres_name_for_this_exheres() {
+javafix_get_exheres_name_for_this_exheres() {
     # Technically, exheres having no slot or a zero slot are unslotted exheres.
     # Nonetheless, this exlib explicitly slots zero slot exheres for forwards
     # compatibility with future releases of those exheres.

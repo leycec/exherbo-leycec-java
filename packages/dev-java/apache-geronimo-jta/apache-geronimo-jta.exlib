@@ -35,8 +35,8 @@ apache-geronimo-jta_src_unpack() {
 
 apache-geronimo-jta_src_install() {
     # Copy fetched jar files into locally renamed copies.
-    local jta_spec_jar="${WORK}/${PNV}-spec.jar" \
-          jta_impl_jar="${WORK}/${PNV}-impl.jar"
+    local jta_spec_jar="${WORK}/${PN}-spec.jar" \
+          jta_impl_jar="${WORK}/${PN}-impl.jar"
     cp "${FETCHEDDIR}/${JTA_SPEC_JAR_BASENAME}" "${jta_spec_jar}"
     cp "${FETCHEDDIR}/${JTA_IMPL_JAR_BASENAME}" "${jta_impl_jar}"
 
