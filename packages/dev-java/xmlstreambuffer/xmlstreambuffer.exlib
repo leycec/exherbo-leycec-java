@@ -1,0 +1,53 @@
+# Copyright 2010 Cecil Curry <leycec@gmail.com>
+# Distributed under the terms of the GNU General Public License v2
+
+# ....................{ EXLIB                              }....................
+# See the "java-net" exlib for details.
+myexparam pv_id=
+
+require antefix java-net [ \
+    pn_id=4258 pv_id=$(exparam pv_id) \
+    pnv="StreamBufferPackage_src_${PV}" suffix="zip" ]
+
+# ....................{ EXHERES                            }....................
+BUGS_TO="leycec@gmail.com"
+
+SUMMARY="Java buffered stream-based representation of an XML infoset"
+DESCRIPTION="
+XML Stream Buffer defines a buffered stream-based representation of an XML
+infoset in Java and mechanisms to create and processs stream buffers using
+standard XML APIs. Goals include:
+
+    * Design a very efficient stream-based memory representation of XML
+      infosets;
+    * Create and process stream buffers using the standard Java-based XML APIs
+      SAX, StAX and DOM;
+    * Mark fragments of an XML infoset when creating a stream buffer for
+      targeted processing of fragments. Fragments can be accessed directly
+      rather than sequentially and can be streamed independently of the whole
+      stream. Such marking could be achieved for elements that have attributes
+      of type ID, explicitly specified elements or simple linear XPath
+      expressions.
+    * Remove or replace marked fragments.
+"
+
+LICENCES="|| ( CDDL-1.0 GPL-2 )"
+DEPENDENCIES="
+    build+run:
+        dev-java/stax-ex:1
+    test:
+        dev-java/junit:4
+"
+
+WORK="${WORKBASE}/streambuffer"
+
+ANT_SRC_CONFIGURE_PARAMS=( init )
+ANT_SRC_COMPILE_PARAMS=( compile )
+ANT_SRC_TEST_PARAMS=( test )
+ANT_SRC_INSTALL_PARAMS=( jar )
+
+JAVA_SRC_LIBRARY_DIR="lib"
+JAVA_SRC_PREPARE_JARS=( "stax-ex:1" )
+JAVA_SRC_TEST_JARS=( "junit:4" )
+JAVA_SRC_INSTALL_JARS=( "dist/streambuffer.jar" )
+
