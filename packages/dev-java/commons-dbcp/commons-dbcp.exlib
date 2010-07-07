@@ -1,0 +1,47 @@
+# Copyright 2010 Cecil Curry <leycec@gmail.com>
+# Distributed under the terms of the GNU General Public License v2
+
+require antefix apache-commons
+export_exlib_phases src_prepare
+
+BUGS_TO="leycec@gmail.com"
+
+SUMMARY="Java database connection pooling API"
+DESCRIPTION="
+Commons DBCP is a Java database connection pooling API. It provides developers a
+\"pool\" of open connections shared between all of the application's current
+users. This is made feasible due to the likelihood the number of users actually
+performing a request at any given time is a very small percentage of the total
+number of active users, and during request processing is the only time that a
+database connection is required. Commons DBCP coordinate the efforts required to
+create and maintain an efficient, feature-rich package for solving such problems.
+"
+
+UPSTREAM_DOCUMENTATION="${HOMEPAGE}/api-${PV} [[ lang = en ]]"
+
+#FIXME: Add support for testing. This will be painful, due to the unit tests'
+#dependency on external exheres: commons-logging, tomcat, and more.
+DEPENDENCIES="
+    build+run:
+        dev-java/apache-geronimo-jta:1.1
+        dev-java/commons-pool:1[>=1.5.4]
+"
+
+ANT_SRC_CONFIGURE_PARAMS=( init )
+ANT_SRC_COMPILE_PARAMS=( compile )
+ANT_SRC_INSTALL_PARAMS=( build-jar )
+
+JAVA_SRC_INSTALL_JARS=( "${APACHE_COMMONS_DIST_DIR}/${PN}.jar" )
+
+commons-dbcp_src_prepare() {
+    apache-commons_src_prepare
+
+    # Commons DBCP ships a not very helpful "build.properties.sample" file.
+    # Brush off that file, and make our own "build.properties" by hand.
+    edo cat <<EOF > "build.properties" 
+commons-pool.jar=$(which_installed_jar_file "commons-pool:1")
+jta-spec.jar=$(which_installed_jar_file_from_spec "apache-geronimo-jta:1.1 apache-geronimo-jta-spec")
+jta-impl.jar=$(which_installed_jar_file_from_spec "apache-geronimo-jta:1.1 apache-geronimo-jta-impl")
+EOF
+}
+
