@@ -1,0 +1,46 @@
+# Copyright 2010 Cecil Curry <leycec@gmail.com>
+# Distributed under the terms of the GNU General Public License v2
+
+# The Java Transaction API (JTA) is a strange beast: Sun's implementation is
+# free but not open source, and every free AND open source implementation
+# requires this Geronimo JAR file with the JTA specification. Naturally, there
+# appears to be no source code available for building this JAR file. So, this
+# exheres currently installs a fetched binary.
+require javafix apache [ pn="geronimo" ]
+export_exlib_phases src_unpack src_install
+
+BUGS_TO="leycec@gmail.com"
+
+SUMMARY="Apache Geronimo implementation of the Java Transaction API (JTA)"
+DESCRIPTION="
+Geronimo JTA is the Apache Geronimo implementation of the Java Transaction API
+(JTA), packaged independently from Apache Geronimo for exheres convenience.
+"
+
+JTA_SPEC_JAR_BASENAME="geronimo-jta_1.1_spec-1.1.jar"
+JTA_IMPL_JAR_BASENAME="geronimo-transaction-1.2-beta.jar"
+DOWNLOADS="
+http://svn.codehaus.org/btm/branches/2.0.0/lib/${JTA_SPEC_JAR_BASENAME}
+http://www.ibiblio.org/maven2/org/apache/geronimo/modules/geronimo-transaction/1.2-beta/${JTA_IMPL_JAR_BASENAME}
+"
+
+HOMEPAGE="http://geronimo.apache.org/"
+UPSTREAM_DOCUMENTATION="${HOMEPAGE}/javadoc.html [[ lang = en ]]"
+
+WORK="${WORKBASE}"
+
+apache-geronimo-jta_src_unpack() {
+    ewarn "This exheres currently installs fetched JAR file binaries."
+}
+
+apache-geronimo-jta_src_install() {
+    # Copy fetched jar files into locally renamed copies.
+    local jta_spec_jar="${WORK}/${PNV}-spec.jar" \
+          jta_impl_jar="${WORK}/${PNV}-impl.jar"
+    cp "${FETCHEDDIR}/${JTA_SPEC_JAR_BASENAME}" "${jta_spec_jar}"
+    cp "${FETCHEDDIR}/${JTA_IMPL_JAR_BASENAME}" "${jta_impl_jar}"
+
+    # Install the locally renamed copies to the filesystem.
+    javafix_install_jars "${jta_spec_jar}" "${jta_impl_jar}"
+}
+
