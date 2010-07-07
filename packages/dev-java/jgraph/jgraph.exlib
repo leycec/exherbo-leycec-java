@@ -1,0 +1,59 @@
+# Copyright 2010 Cecil Curry <leycec@gmail.com>
+# Distributed under the terms of the GNU General Public License v2
+
+# Do not require the "sourceforge" exlib, as the DOWNLOAD URI for this exheres
+# does not conform to SourceForge standards.
+require antefix
+export_exlib_phases src_prepare
+
+BUGS_TO="leycec@gmail.com"
+
+SUMMARY="Java graph drawing component"
+DESCRIPTION="
+JGraph claims to be the most powerful, easy-to-use, feature-rich and standards-
+compliant open source graph drawing component available for Java. Note that the
+successor to this exheres, JGraphX, lives in a seperate exheres.
+"
+
+# JGraph disappointingly sets the version number for the newest version to
+# "latest." There's simply no good way of discerning this without scraping their
+# website. So, we'll hack it.
+MY_PV_LATEST=5.13.0.0
+if [[ ${PV} == ${MY_PV_LATEST} ]]; then
+    MY_PV=latest
+else
+    MY_PV=${PV}
+fi
+
+SLOT=5
+HOMEPAGE="https://www.${PN}.com/${PN}${SLOT}"
+DOWNLOADS="mirror://sourceforge/${PN}/${PN}/${PV}/${PN}-${MY_PV}-bsd-src.jar"
+UPSTREAM_DOCUMENTATION="http://www.${PN}.com/pub/${PN}manual.pdf [[ lang = en ]]"
+REMOTE_IDS+=" sourceforge:${PN} "
+
+LICENCES="BSD-3"
+#DEPENDENCIES="
+#    build+run:
+#        dev-java/jgraph:5
+#"
+
+WORK="${WORKBASE}"
+
+# JGraphT's "build.xml" defines a JDK version-dependent JAR filename by default.
+# Substitute that with a sensible JAR filename.
+#ANT_PARAMS=( -Dproject.jar.name="${PN}.jar" )
+
+ANT_SRC_CONFIGURE_PARAMS=( generate )
+ANT_SRC_COMPILE_PARAMS=( compile )
+ANT_SRC_INSTALL_PARAMS=( jar )
+
+JAVA_SRC_INSTALL_JARS=( "build/lib/${PN}.jar" )
+
+jgraph_src_prepare() {
+    antefix_src_prepare
+
+    # Remove the "doc" Ant task dependency from the "jar" Ant task.
+    edo sed -e 's/\(name="jar" depends=\)"compile, doc"/\1"compile"/' \
+            -i "${ANT_BUILD_XML}"
+}
+
