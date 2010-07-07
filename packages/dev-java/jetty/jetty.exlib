@@ -21,7 +21,7 @@ devices, tools, frameworks, application servers, and clusters.
 HOMEPAGE="http://${PN}.codehaus.org/${PN}/"
 
 # All Jetty slots require a build- and runtime user and group.
-DEPENDENCIES+="
+DEPENDENCIES="
     build+run:
         user/${PN}
         group/${PN}

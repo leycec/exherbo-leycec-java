@@ -21,7 +21,7 @@ with common encodings.
 UPSTREAM_DOCUMENTATION="${HOMEPAGE}/api-release [[ lang = en ]]"
 UPSTREAM_CHANGELOG="${HOMEPAGE}/changes-report.html#a${PV}"
 
-DEPENDENCIES+="
+DEPENDENCIES="
     test:
         dev-java/junit:4
 "
@@ -30,7 +30,7 @@ DEPENDENCIES+="
 # prepares the build for compilation.
 ANT_SRC_CONFIGURE_PARAMS=( static )
 ANT_SRC_COMPILE_PARAMS=( compile )
-ANT_TEST_PARAMS=( test )
+ANT_SRC_TEST_PARAMS=( test )
 ANT_SRC_INSTALL_PARAMS=( jar )
 
 # Install "commons-codec.jar" with an Eclipse-compatible OSGi manifest.
@@ -42,7 +42,6 @@ commons-codec_src_prepare() {
 
     # Commons Codec ships a not very helpful "build.properties.sample" file.
     # Brush off that file and create our own "build.properties" file by hand.
-    echo ">>> Creating build.properties"
     edo cat <<EOF > "build.properties" 
 source.home=src/java
 test.home=src/test

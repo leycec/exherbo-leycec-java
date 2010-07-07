@@ -11,7 +11,7 @@ require antefix httpcomponents-client [ pn="commons-httpclient" ]
 SLOT="3"
 PLATFORMS="~amd64 ~x86"
 
-DEPENDENCIES+="
+DEPENDENCIES="
     build+run:
         dev-java/commons-codec:1[>=1.4]
         dev-java/commons-logging:1[>=1.1.1]

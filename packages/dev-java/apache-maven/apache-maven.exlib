@@ -31,7 +31,7 @@ UPSTREAM_RELEASE_NOTES="${HOMEPAGE}/docs/${PV}/release-notes.html"
 # source-based Maven build; we just want it working.
 #
 # See "${WORK}/DEPENDENCIES" for details.
-DEPENDENCIES+=""
+#DEPENDENCIES=""
 
 # Maven's "build.xml" performs automated integration testing. Naturally, this
 # breaks sydbox's path sandboxing. Patch it away, McCoy.

@@ -37,7 +37,7 @@ UPSTREAM_CHANGELOG="${LUCENE_DOCUMENTATION_ROOT}/changes/Changes.html"
 #    lucene_contribs:
 #        analyzers   [[ description = [ install lucene-analyzers.jar for tokenizing text ] ]]
 #"
-MYOPTIONS+="debug"
+MYOPTIONS="debug"
 LUCENE_IS_BUILDING_CONTRIB_ANALYZERS=1
 
 # Technically, Java Lucene does not require JavaCC to build: its source tarball
@@ -49,7 +49,7 @@ LUCENE_IS_BUILDING_CONTRIB_ANALYZERS=1
 #   against JavaCC 4.1, for example, when JavaCC's current version was 5.0.
 # * Because, given a choice between accepting pre-compiled binaries and self-
 #   compiling system-specific binaries, Exherbons choose the latter. Hu-ah!
-DEPENDENCIES+="
+DEPENDENCIES="
     build:
         dev-java/javacc:5
     test:

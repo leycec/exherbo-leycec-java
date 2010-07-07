@@ -21,7 +21,7 @@ UPSTREAM_DOCUMENTATION="${HOMEPAGE}/${PV}/apidocs [[ lang = en ]]"
 UPSTREAM_CHANGELOG="${HOMEPAGE}/${PV}/changes-report.html"
 
 # Log4j supports the following optional dependencies. Sadly, we don't.
-#DEPENDENCIES+="
+#DEPENDENCIES="
 #    javamail? ( dev-java/javamail )
 #    jmx?      ( dev-java/jmx )
 #    jms?      ( dev-java/jms )

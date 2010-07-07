@@ -1,7 +1,7 @@
 # Copyright 2010 Cecil Curry <leycec@gmail.com>
 # Distributed under the terms of the GNU General Public License v2
 
-require maven [[ is_offline=false ]] httpcomponents-client
+require maven [ is_offline=false ] httpcomponents-client
 
 # HttpClient 4.x.x significantly breaks backwards compatibility. In fact, it's
 # even built under a different build system! Whereas HttpClient 3.x.x and
@@ -10,7 +10,7 @@ require maven [[ is_offline=false ]] httpcomponents-client
 SLOT="4"
 PLATFORMS="~amd64 ~x86"
 
-DEPENDENCIES+="
+DEPENDENCIES="
     build+run:
         dev-java/commons-codec:1[>=1.4]
         dev-java/commons-logging:1[>=1.1.1]

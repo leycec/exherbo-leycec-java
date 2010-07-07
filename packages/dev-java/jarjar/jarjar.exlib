@@ -27,7 +27,7 @@ multiple jar files depending on specific versions of other libraries.
 UPSTREAM_DOCUMENTATION="http://code.google.com/p/${PN}/w/list [[ lang = en ]]"
 
 LICENCES="BSD-3"
-DEPENDENCIES+="
+DEPENDENCIES="
     build+run:
         dev-java/asm:3[>=3.2]
 "

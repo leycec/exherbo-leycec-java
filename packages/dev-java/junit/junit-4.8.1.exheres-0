@@ -7,10 +7,10 @@ require junit [ archive_jar_file="${PNV}-src.jar" ]
 # JUnit 3.x.x series? High-profile exheres (like Eclipse) require both.
 SLOT="4"
 PLATFORMS="~amd64 ~x86"
-MYOPTIONS+="doc examples"
+MYOPTIONS="doc examples"
 
 # JUnit 4.x.x adds a dependency on Hamcrest. 
-DEPENDENCIES+="
+DEPENDENCIES="
     build+run:
         dev-java/hamcrest:1[>=1.2]
 "

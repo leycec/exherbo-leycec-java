@@ -37,7 +37,7 @@ UPSTREAM_DOCUMENTATION="${HOMEPAGE}/doc/docindex.html [[ lang = en ]]"
 
 LICENCES="BSD-3"
 DEPENDENCIES="
-    build+run+test:
+    build+test:
         dev-java/junit:4
 "
 

@@ -23,14 +23,14 @@ UPSTREAM_RELEASE_NOTES="${HOMEPAGE}/${PNV}/RELEASE-NOTES.txt"
 # Therefore, the following logging facilities are optional but recommended.
 # Note it also supports the Apache Avalon logkit and framework; as of 2004,
 # however, Apache Avalon is dead and thus not supported by this exheres.
-MYOPTIONS+="
+MYOPTIONS="
     log4j  [[ description = [ Support logging via Apache Log4J (recommended) ] ]]
 "
 
 # Commons Logging insists it requires Tomcat 4.1.xx (i.e., Servlet API 2.3).
 # Fortunately, it builds against all later slots as well. Thus, use the newest
 # working Tomcat slot as of this writing.
-DEPENDENCIES+="
+DEPENDENCIES="
     build+run:
         log4j?  ( dev-java/log4j:1[>=1.2.16] )
         dev-java/tomcat:6[>=6.0.26]

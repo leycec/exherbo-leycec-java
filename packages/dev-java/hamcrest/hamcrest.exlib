@@ -18,8 +18,8 @@ frameworks such as JUnit and jMock. (This is the Hamcrest Java port.)
 UPSTREAM_DOCUMENTATION="http://code.google.com/p/${PN}/w/list [[ lang = en ]]"
 
 LICENCES="BSD-3"
-MYOPTIONS+="debug"
-DEPENDENCIES+="
+MYOPTIONS="debug"
+DEPENDENCIES="
     build+run:
         dev-java/jarjar:1[>=1.0]
         dev-java/qdox:1[>=1.11]

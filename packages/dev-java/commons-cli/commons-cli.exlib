@@ -1,7 +1,5 @@
 # Copyright 2010 Cecil Curry <leycec@gmail.com>
 # Distributed under the terms of the GNU General Public License v2
-# Based in part upon 'commons-cli-1.4.ebuild' from Gentoo, which is:
-#     Copyright 1999-2010 Gentoo Foundation
 
 # Commons CLI 1.2.x migrated from Ant to Maven. Undo that.
 require antefix [ create_build_xml=true ] apache-commons
@@ -19,7 +17,7 @@ UPSTREAM_DOCUMENTATION="${HOMEPAGE}/api-release [[ lang = en ]]"
 UPSTREAM_RELEASE_NOTES="${HOMEPAGE}/release_$(ever replace_all _).html [[ lang = en ]]"
 
 #FIXME: Add "junit" support to "create_build_xml" functionality in antefix.
-#DEPENDENCIES+="
+#DEPENDENCIES="
 #    test:
 #        dev-java/junit:4
 #"

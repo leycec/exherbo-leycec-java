@@ -89,7 +89,7 @@ apache-commons_src_prepare() {
     # Most Apache Commons exheres ship a "build.properties.sample" file that,
     # while helpful when writing exheres, has no utility when actually building
     # exheres. It's definitely dangerous to leave lying around: if found by
-    # "build.xml", the bad defaults this file defines might conflict with those
+    # "build.xml", the bad defaults that file defines will conflict with those
     # this exheres defines.
     [[ -f "build.properties.sample" ]] && edo rm "build.properties.sample"
 }

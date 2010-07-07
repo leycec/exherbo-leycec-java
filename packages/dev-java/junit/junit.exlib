@@ -53,7 +53,7 @@ DOWNLOADS="mirror://sourceforge/${PN}/${MY_PNV}.zip"
 WORK="${WORKBASE}/${MY_PNV}"
 
 LICENCES="CPL-1.0"
-DEPENDENCIES+="
+DEPENDENCIES="
     build:
         app-arch/unzip
 "
