@@ -40,13 +40,12 @@ JETTY_UTIL_JAR_FILE="${JETTY_JAR_DIR}/${PN}-util-${PV}.jar"
 jetty_src_install() {
     javafix_src_install
 
-    local JETTY_ETC_DIR="/etc/${PN}/"
-    local JETTY_LOG_DIR="/var/log/${PN}"
-    local JETTY_RUN_DIR="/var/run/${PN}"
+    local jetty_etc_dir="/etc/${PN}/"
+    local jetty_log_dir="/var/log/${PN}"
+    local jetty_run_dir="/var/run/${PN}"
 
     # Make the ${JETTY_HOME} exheres global a system-wide environment variable
     # for subsequent access by other exlibs, exheres, and users.
-    echo ">>> Installing environment files"
     hereenvd "60${PN}" <<EOF
 JETTY_HOME=${JETTY_HOME}
 EOF
@@ -56,12 +55,12 @@ EOF
     javafix_replace_jar_manifest "${JETTY_JAR_FILE}"      "${FILES}/MANIFEST.MF"
     javafix_replace_jar_manifest "${JETTY_UTIL_JAR_FILE}" "${FILES}/MANIFEST-util.MF"
 
-    echo ">>> Installing directory tree"
+    # Install Jetty's directory tree.
     dodir   "${JETTY_HOME}"
-    keepdir "${JETTY_LOG_DIR}"
-    keepdir "${JETTY_RUN_DIR}"
-    keepdir "${JETTY_ETC_DIR}/contexts"
-    dosym   "${JETTY_ETC_DIR}" "${JETTY_HOME}/etc"
+    keepdir "${jetty_log_dir}"
+    keepdir "${jetty_run_dir}"
+    keepdir "${jetty_etc_dir}/contexts"
+    dosym   "${jetty_etc_dir}" "${JETTY_HOME}/etc"
 
     exeinto "${JETTY_HOME}/bin"
     doexe "bin/${PN}.sh"
@@ -73,16 +72,14 @@ EOF
 
     # Exherbo exheres expect Jetty jars in the customary directory,
     # "/usr/share/jetty/${SLOT/". Symlink from the above directory here.
-    echo ">>> Symlinking jar files"
     javafix_install_jar_symlinks \
         "${JETTY_HOME}/${JETTY_JAR_FILE}" \
         "${JETTY_HOME}/${JETTY_UTIL_JAR_FILE}"
 
     # Lastly, ensure proper permissioning.
-    echo ">>> Permissioning installed files"
     edo chown -R ${PN}:${PN} \
          "${IMAGE}/${JETTY_HOME}" \
-         "${IMAGE}/${JETTY_LOG_DIR}" \
-         "${IMAGE}/${JETTY_RUN_DIR}"
+         "${IMAGE}/${jetty_log_dir}" \
+         "${IMAGE}/${jetty_run_dir}"
 }
 
