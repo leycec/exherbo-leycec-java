@@ -1,0 +1,39 @@
+# Copyright 2010 Cecil Curry <leycec@gmail.com>
+# Distributed under the terms of the GNU General Public License v2
+
+# ....................{ EXLIB                              }....................
+# See the "java-net" exlib for details.
+myexparam pv_id=
+
+# xsdlib does not provide a "build.xml" file. Fortunately, its build process is 
+# simple enough to create a "build.xml" file skeleton for.
+require \
+    antefix  [ create_build_xml=true ] \
+    java-net [ pn_id=61 pv_id=$(exparam pv_id) pnv="${PN}.${PV}" suffix="zip" ]
+
+# ....................{ EXHERES                            }....................
+BUGS_TO="leycec@gmail.com"
+
+SUMMARY="Sun Multi-Schema XML Validator (MSV) library"
+DESCRIPTION="
+The Sun Multi-Schema XML Validator (MSV) library is a Java library for
+validating XML documents against several kinds of XML schemata. It supports
+RELAX NG, RELAX Namespace, RELAX Core, TREX, XML DTDs, and a subset of XML
+Schema Part 1. It can be incorporated into Java applications for validation. 
+"
+
+LICENCES="Apache-1.1 BSD-2"
+DEPENDENCIES="
+    build+run:
+        dev-java/relaxng-datatype:1
+        dev-java/Xerces-J[>=2.00.0]
+"
+
+JAVA_SRC_LIBRARY_DIR="lib"
+JAVA_SRC_PREPARE_JARS=(
+    "relaxng-datatype:1"
+    "Xerces-J xercesImpl.jar"
+)
+
+DEFAULT_SRC_INSTALL_EXTRA_DOCS=( "HowToUse.html" )
+
