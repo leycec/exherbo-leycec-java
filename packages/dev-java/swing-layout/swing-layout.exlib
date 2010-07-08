@@ -1,0 +1,29 @@
+# Copyright 2010 Cecil Curry <leycec@gmail.com>
+# Distributed under the terms of the GNU General Public License v2
+
+# ....................{ EXLIB                              }....................
+# See the "java-net" exlib for details.
+myexparam pv_id=
+require antefix java-net [ pn_id=2752 pv_id=$(exparam pv_id) suffix="zip" ]
+
+# ....................{ EXHERES                            }....................
+BUGS_TO="leycec@gmail.com"
+
+SUMMARY="Java extensions for simplifying Swing layout"
+DESCRIPTION="
+Swing Layout Extensions goal is to make it easy to create professional cross-
+platform layouts with Swing. This project has an eye towards the needs of GUI
+builders, such as NetBeans. It consists of the following pieces:
+
+    * Ability to get the baseline for components.
+    * Ability to get the preferred gap between components.
+    * A new LayoutManager that utilizes both of these concepts and is tuned toward a
+    * free-form drag and drop layout model as can be provided by GUI builders. 
+"
+LICENCES="LGPL-3"
+
+ANT_SRC_COMPILE_PARAMS=( compile )
+ANT_SRC_INSTALL_PARAMS=( jar )
+JAVA_SRC_INSTALL_JARS=( "dist/${PN}.jar" )
+DEFAULT_SRC_INSTALL_EXTRA_DOCS=( "releaseNotes.txt" )
+
