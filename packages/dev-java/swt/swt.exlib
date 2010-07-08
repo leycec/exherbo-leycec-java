@@ -121,7 +121,6 @@ swt_src_unpack() {
            "${swt_build_dir}/org/eclipse/swt/internal/"
     edo cp "${WORK}/version.txt" "${swt_build_dir}/version.txt"
 
-    edo rm "${ANT_BUILD_XML}"
     antefix_create_build_xml
 }
 

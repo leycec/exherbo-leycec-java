@@ -6,13 +6,12 @@ export_exlib_phases src_prepare
 
 BUGS_TO="leycec@gmail.com"
 
-SUMMARY="Java sourcecode generator for parsing formal grammars"
+SUMMARY="Java framework for processing biological data"
 DESCRIPTION="
-JavaCC, the Java Compiler Compiler, is an open-source parser generator for the
-Java programming language. It's similar to Yacc in that it generates a parser
-for a formal grammar provided in EBNF notation, except the output is Java source
-code. Unlike Yacc, however, JavaCC generates top-down parsers. This limits it to
-the LL(k) class of grammars and, in particular, prevents use of left recursion.
+BioJava is a Java framework for processing biological data. It provides
+analytical and statistical routines, parsers for common file formats and allows
+the manipulation of sequences and 3D structures. The goal of the biojava project
+is to facilitate rapid application development for bioinformatics. 
 "
 
 # Exheres version without version separators.

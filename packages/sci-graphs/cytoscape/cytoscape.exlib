@@ -32,7 +32,9 @@ MYOPTIONS=""
 
 DEPENDENCIES="
     build:
+        dev-java/relaxng-datatype:1
         dev-java/xalan-java
+        dev-java/xsdlib:0
     build+run:
         dev-java/biojava:1
         dev-java/colt:1
@@ -52,8 +54,6 @@ DEPENDENCIES="
 #       dev-java/jsr173
 
 #       dev-java/batik[>=1.6]
-#       dev-java/relaxng-datatype
-#       dev-java/xsdlib
 
 #       dev-java/itext
 #       dev-java/jdom:1

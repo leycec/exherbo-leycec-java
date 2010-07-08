@@ -26,7 +26,6 @@ to:
 
 UPSTREAM_DOCUMENTATION="${HOMEPAGE}/nonav/maven/apidocs [[ lang = en ]]"
 LICENCES="|| ( CDDL-1.0 GPL-2 )"
-
 DEPENDENCIES="
     test:
         dev-java/junit:4

@@ -491,9 +491,9 @@ antefix_create_build_xml_file() {
     illegal_in_global_scope
     [[ ${#} -eq 1 ]] || die_unless_nonfatal "exactly one argument needed"
 
-    # Ensure this exheres doesn't already have a default "build.xml" file.
+    # If this exheres already provides a default "build.xml" file, move it away.
     [[ -f "${ANT_BUILD_XML}" ]] &&
-        die_unless_nonfatal "${PN} already provides a default \"${ANT_BUILD_XML}\""
+        edo mv "${ANT_BUILD_XML}" "${ANT_BUILD_XML}.orig"
 
     local build_xml_src_dir="${ANT_SRC_COMPILE_SOURCE_DIR:-src}"
     local build_xml_lib_dir="${ANT_SRC_LIBRARY_DIR:-lib}"
@@ -553,5 +553,4 @@ antefix_create_build_xml_file() {
 </project>
 EOF
 }
-
 
