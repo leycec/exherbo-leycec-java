@@ -1,0 +1,22 @@
+# Copyright 2010 Cecil Curry <leycec@gmail.com>
+# Distributed under the terms of the GNU General Public License v2
+
+# This exheres does provide a default "build.xml" file; unfortunately, that
+# file is largely useless. Replace it.
+require antefix [ create_build_xml=true ] sourceforge [ project="relaxng" ]
+
+BUGS_TO="leycec@gmail.com"
+
+SUMMARY="RELAX NG datatype"
+DESCRIPTION="
+RELAX NG datatype is a standard Java interface between RELAX NG datatype
+vocabularies and schema processors.
+"
+
+MY_PN="relaxngDatatype"
+MY_PNV="${MY_PN}-${PV}"
+DOWNLOADS="mirror://sourceforge/relaxng/${MY_PNV}.zip"
+LICENCES="as-is"
+
+WORK="${WORKBASE}/${MY_PNV}"
+
