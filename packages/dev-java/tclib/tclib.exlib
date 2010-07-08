@@ -1,0 +1,38 @@
+# Copyright 2010 Cecil Curry <leycec@gmail.com>
+# Distributed under the terms of the GNU General Public License v2
+
+require antefix
+#export_exlib_phases src_prepare src_install
+
+BUGS_TO="leycec@gmail.com"
+
+SUMMARY="Java type-specific collections library"
+DESCRIPTION="
+tclib is a Java type-specific collections library. This library uses
+unsynchronized methods returning unboxed primitive types to provide optimal
+performance.
+"
+
+#FIXME: This is an unversioned download URI, which is not particularly good.
+HOMEPAGE="http://www.sosnoski.com/opensrc/${PN}"
+DOWNLOADS="${HOMEPAGE}/code/typed.jar -> ${PNV}.jar"
+UPSTREAM_DOCUMENTATION="${HOMEPAGE}/docs [[ lang = en ]]"
+
+LICENCES="MIT"
+
+#FIXME: Enable unit tests. They currently fail with compilation error.
+#DEPENDENCIES="
+#    test:
+#        dev-java/junit:4
+#"
+
+WORK="${WORKBASE}/build"
+
+ANT_SRC_COMPILE_PARAMS=( compile )
+#ANT_SRC_TEST_PARAMS=( compile-tests run )
+ANT_SRC_INSTALL_PARAMS=( basejar )
+
+JAVA_SRC_LIBRARY_DIR="${WORKBASE}/lib"
+#JAVA_SRC_TEST_JARS=( "junit:4" )
+JAVA_SRC_INSTALL_JARS=( "${JAVA_SRC_LIBRARY_DIR}/${PN}.jar" )
+
