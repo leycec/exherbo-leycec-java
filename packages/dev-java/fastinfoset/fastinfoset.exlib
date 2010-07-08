@@ -1,0 +1,49 @@
+# Copyright 2010 Cecil Curry <leycec@gmail.com>
+# Distributed under the terms of the GNU General Public License v2
+
+# ....................{ EXLIB                              }....................
+# See the "java-net" exlib for details.
+myexparam pv_id=
+
+require antefix java-net [ \
+    pn_id=2634 pv_id=$(exparam pv_id) \
+    pnv="FastInfosetPackage_src_${PV}" suffix="zip" ]
+
+# ....................{ EXHERES                            }....................
+BUGS_TO="leycec@gmail.com"
+
+SUMMARY="Java implementation of the Fast Infoset standard for binary XML"
+DESCRIPTION="
+FastInfoset is a Java implementation of the Fast Infoset standard for binary
+XML. This standard specifies a standardized binary encoding for the XML
+Information Set. An XML infoset (such as a DOM tree, StAX events or SAX events
+in programmatic representations) may be serialized to an XML 1.x document or, as
+specified by the Fast Infoset standard, may be serialized to a fast infoset
+document. Fast infoset documents are generally smaller in size and faster to
+parse and serialize than equivalent XML documents.
+"
+
+UPSTREAM_DOCUMENTATION="${HOMEPAGE}/standardization.html [[ lang = en ]]"
+LICENCES="Apache-2.0"
+
+DEPENDENCIES="
+    test:
+        dev-java/junit:4
+"
+
+WORK="${WORKBASE}/FastInfoset"
+
+ANT_BUILD_XML="build-without-nb.xml"
+# StAX-Ex's "build.xml" defaults libdir to "~/.maven/repository", then attempts
+# to create that directory. This is bad; so, set a saner default.
+#ANT_PARAMS=( -Dlibdir="lib" )
+
+ANT_SRC_CONFIGURE_PARAMS=( prepare )
+ANT_SRC_COMPILE_PARAMS=( compile )
+ANT_SRC_TEST_PARAMS=( test )
+ANT_SRC_INSTALL_PARAMS=( dist )
+
+JAVA_SRC_LIBRARY_DIR="lib"
+JAVA_SRC_TEST_JARS=( "junit:4" )
+JAVA_SRC_INSTALL_JARS=( "dist/FastInfoset.jar" )
+
