@@ -80,7 +80,7 @@ JAVA_SRC_LIBRARY_DIR=""
 #     JAVA_SRC_PREPARE_JARS=( jarjar qdox "/usr/share/asm/asm.jar" )
 #
 # If filenames are not known until install time, leave this array blank and
-# call "symlink_jars" within your "src_prepare" function.
+# call "javafix_prepare_jar_symlinks" within your "src_prepare" function.
 JAVA_SRC_PREPARE_JARS=( )
 
 # Array of absolute paths to or relative names of external jar files to be
@@ -91,7 +91,7 @@ JAVA_SRC_PREPARE_JARS=( )
 #     JAVA_SRC_TEST_JARS=( "junit:4" )
 #
 # If filenames are not known until install time, leave this array blank and
-# call "symlink_jars" within your "src_test" function.
+# call "javafix_prepare_jar_symlinks" within your "src_test" function.
 JAVA_SRC_TEST_JARS=( )
 
 # Array of absolute paths to text files to be "deversion"-ated. Ant "build.xml"
@@ -229,6 +229,9 @@ JAVA_IS_DISABLING_NETWORK_SANDBOXING=
 # Defaults to set.
 JAVA_IS_UNPACKING_ARCHIVES=1
 
+# Bash glob pattern matching a version of maximum length: e.g., "4.2.24".
+JAVA_VERSION_GLOB='+([[:digit:].])*(rc+([[:digit:].]))'
+
 # Bash pattern matching the version suffix commonly appended to jar filenames.
 # This pattern matches conventional versions (e.g., "hamcrest-1.2.jar") and
 # unconventional revisioned versions (e.g., "jarjar-1.0rc8.jar"). By design,
@@ -237,12 +240,12 @@ JAVA_IS_UNPACKING_ARCHIVES=1
 # Don't forget to append a '$' if appropriate!
 JAVA_JAR_VERSION_PATTERN='-[[:digit:].]+(rc[[:digit:].]+)?\.jar'
 
-# Bash pattern matching the same from within a parameter expansion: e.g.,
+# Bash glob pattern matching the same from within a parameter expansion: e.g.,
 #
 #    Echoes "harhar.jar".
 #    JAR_FILE=harhar-5.62.951.jar && \
-#        echo ${JAR_FILE/${JAVA_JAR_PARAMETER_VERSION_PATTERN}/.jar}
-JAVA_JAR_PARAMETER_VERSION_PATTERN='%-+([[:digit:].])*(rc+([[:digit:].]))\.jar'
+#        echo ${JAR_FILE/${JAVA_JAR_VERSION_PARAMETER_PATTERN}/.jar}
+JAVA_JAR_VERSION_PARAMETER_PATTERN='%-'"${JAVA_VERSION_GLOB}"'\.jar'
 
 # ....................{ PHASES                             }....................
 javafix_pkg_setup() {
@@ -279,7 +282,7 @@ javafix_src_prepare() {
 
     # Clean the library directory of all jar files regardless of whether 
     # "clean_jar_files" is enabled or not. These jar files will be replaced
-    # by symlinks in the call to symlink_jars(), below.
+    # by symlinks in the call to javafix_prepare_jar_symlinks(), below.
     #
     # Do this here rather than in javafix_src_unpack() to allow exheres to move
     # desired jar files, prior to their deletion here.
@@ -289,7 +292,7 @@ javafix_src_prepare() {
     if [[ -n "${JAVA_SRC_PREPARE_JARS[@]}" ]]; then
        [[ -n "${JAVA_SRC_LIBRARY_DIR}" ]] ||
             die_unless_nonfatal "\$JAVA_SRC_LIBRARY_DIR not set; cannot link external jar files"
-        symlink_jars "${JAVA_SRC_LIBRARY_DIR}" \
+        javafix_prepare_jar_symlinks "${JAVA_SRC_LIBRARY_DIR}" \
                      "${JAVA_SRC_PREPARE_JARS[@]}"
     fi
 }
@@ -308,7 +311,7 @@ javafix_src_test() {
     if [[ -n "${JAVA_SRC_TEST_JARS[@]}" ]]; then
        [[ -n "${JAVA_SRC_LIBRARY_DIR}" ]] ||
             die_unless_nonfatal "\$JAVA_SRC_LIBRARY_DIR not set; cannot link external jar files"
-        symlink_jars "${JAVA_SRC_LIBRARY_DIR}" \
+        javafix_prepare_jar_symlinks "${JAVA_SRC_LIBRARY_DIR}" \
                      "${JAVA_SRC_TEST_JARS[@]}"
     fi
 }
@@ -398,8 +401,9 @@ javafix_clean_class_files() {
 # ....................{ DEVERSIONERS                       }....................
 # void javafix_deversion_files(char *filename1, char *filename2, ...)
 #
-# Patch the passed absolute or relative filenames of jar file version suffixes.
-# These files are typically "build.xml" files, so as to generalize their build
+# Deversion the contents of the passed absolute or relative filenames: i.e.,
+# remove version suffixes from every matching line in these filenames. Passed
+# filenames are typically "build.xml" files, so as to generalize their build
 # process to non-versioned jar files installed on the local machine.
 javafix_deversion_files() {
     local deversion_java_file library_jar_spec library_jar_name
@@ -433,8 +437,18 @@ javafix_deversion_files() {
     done
 }
 
-# ....................{ SYMLINKERS                         }....................
-# void symlink_jars(char *symlink_dir, char *jar_spec1, char *jar_spec2, ...)
+# char *javafix_get_deversioned_jar_basename(char *jar_filename)
+#
+# Return the deversioned basename of the passed jar filename.
+javafix_get_deversioned_jar_basename() {
+    illegal_in_global_scope
+    [[ ${#} -eq 1 ]] || die_unless_nonfatal "exactly one argument needed"
+    basename "${1/${JAVA_JAR_VERSION_PARAMETER_PATTERN}/.jar}"
+}
+
+# ....................{ PREPARERS                          }....................
+# void javafix_prepare_jar_symlinks(
+#     char *symlink_dir, char *jar_spec1, char *jar_spec2, ...)
 #
 # Symlink the passed jar specificiers to relative filenames having the same
 # basename in the passed absolute or relative path under ${WORK} to the symlink
@@ -447,21 +461,21 @@ javafix_deversion_files() {
 # dependencies, as described by the "which_installed_jar_file_from_specifier"
 # function. Example:
 #
-#    # Symlinks "/usr/share/ecocide/ecocide.jar" into "lib/".
-#    symlink_jars("lib" "ecocide")
-#    # Symlinks "/usr/share/ecocide/4/ecocide.jar" into "lib/".
-#    symlink_jars("lib" "ecocide:4")
-#    # Tries "/usr/share/moa-core/moa-core.jar", which is not found. Then
-#    # tries "/usr/share/moa/moa-core.jar", which is found. Finally,
-#    # symlinks "/usr/share/moa/moa-core.jar" into "lib/".
-#    symlink_jars("lib" "moa-core")
-#    # Symlinks "/usr/share/ecocide/1080.jar" into "lib/".
-#    symlink_jars("lib" "ecocide 1080")
-#    # Symlinks "/usr/share/ecocide/1.2/1080.jar" into "lib/".
-#    symlink_jars("lib" "ecocide:1.2 1080")
+#      # Symlinks "/usr/share/ecocide/ecocide.jar" into "lib/".
+#      javafix_prepare_jar_symlinks("lib" "ecocide")
+#      # Symlinks "/usr/share/ecocide/4/ecocide.jar" into "lib/".
+#      javafix_prepare_jar_symlinks("lib" "ecocide:4")
+#      # Tries "/usr/share/moa-core/moa-core.jar", which is not found. Then
+#      # tries "/usr/share/moa/moa-core.jar", which is found. Finally,
+#      # symlinks "/usr/share/moa/moa-core.jar" into "lib/".
+#      javafix_prepare_jar_symlinks("lib" "moa-core")
+#      # Symlinks "/usr/share/ecocide/1080.jar" into "lib/".
+#      javafix_prepare_jar_symlinks("lib" "ecocide 1080")
+#      # Symlinks "/usr/share/ecocide/1.2/1080.jar" into "lib/".
+#      javafix_prepare_jar_symlinks("lib" "ecocide:1.2 1080")
 #
 # For safety, this function dies when the jar to be symlinked does not exist.
-symlink_jars() {
+javafix_prepare_jar_symlinks() {
     illegal_in_global_scope
     [[ ${#} -ge 2 ]] || die_unless_nonfatal "at least two arguments needed"
 
@@ -480,23 +494,27 @@ symlink_jars() {
 # The following convenience functions install all Java libraries produced by
 # this exheres into local directories appropriate for this exheres.
 
-# void javafix_install_jars(char *jar_filename1, char *jar_filename2, ...)
+# void javafix_install_jars(
+#     char *src_jar_filename1, char *src_jar_filename2, ...)
 #
-# Copy the passed jar files to relative filenames having the same basename sans
-# version under the installation directory for this exheres: usually,
+# Copy the passed source jar files to relative filenames having the same
+# basename sans version under the installation directory for this exheres: i.e.,
 # "/usr/share/${PN}/${SLOT}/". Installed jar filenames should be versionless to
 # permit their usage elsewhere without concern for the specific version each
 # represents. This resembles:
 #
 #     cp "$filename1" "$filename2" ... "${IMAGE}/${JAVA_SRC_INSTALL_JARS_IMAGE_DIR}"
 #
-# Note that, when passed only one jar file, this function performs additional
-# logic to improve jar filename uniformity; specifically, create a symlink from
-# the installed jar file copy to a relative filename with basename "${PN}.jar".
-# Example:
+# Note that, if this function discovers after installing jar files that it did
+# not install a filename with basename "${PN}.jar", it automatically creates a
+# symlink from the first installed jar file to such a filename. This permits
+# exheres depending on this exheres to access the "main" jar file for this
+# exheres under the guaranteed name of "${PN}.jar". This implies that all
+# exheres must ensure that the first jar file passed to this function is their
+# "main" jar file. Example:
 #
-#     # Copy "dist/FastInfoset.jar" to
-#     # "/usr/share/fastinfoset/${SLOT}/FastInfoset.jar". Then, symlink
+#     # Let "PN=fastinfoset". Then this copies "dist/FastInfoset.jar" to
+#     # "/usr/share/fastinfoset/${SLOT}/FastInfoset.jar" and then symlinks
 #     # "/usr/share/fastinfoset/${SLOT}/FastInfoset.jar" to
 #     # "/usr/share/fastinfoset/${SLOT}/fastinfoset.jar".
 #     javafix_install_jars "dist/FastInfoset.jar"
@@ -507,33 +525,35 @@ javafix_install_jars() {
     local      jar_dir_target=$(which_installed_jar_dir_for_this_exheres)
     insinto "${jar_dir_target}"
 
-    local jar_file_source jar_file_target jar_file_target_basename
+    local jar_file_source \
+          jar_file_target jar_file_target_first jar_file_target_basename
     for   jar_file_source in "${@}"; do
-        jar_file_target_basename=$(basename "${jar_file_source/${JAVA_JAR_PARAMETER_VERSION_PATTERN}/.jar}")
+        jar_file_target_basename=$(javafix_get_deversioned_jar_basename "${jar_file_source}")
         jar_file_target="${jar_dir_target}/${jar_file_target_basename}"
         echo "cp ${jar_file_source} ${jar_file_target}"
         newins  "${jar_file_source}" "${jar_file_target_basename}"
+
+        if [[ -z "${jar_file_target_first}" ]]; then
+            jar_file_target_first="${jar_file_target}"
+        fi
     done
 
-    # If this is the only jar file to be installed, enforce uniformity.
-    if [[ ${#} -eq 1 ]]; then
-        local jar_file_target_symlink=$(which_installed_jar_file_for_this_exheres)
-
-        if [[ ${jar_file_target} != ${jar_file_target_symlink} ]]; then
-            echo "ln -s ${jar_file_target} ${jar_file_target_symlink}"
-            dosym      "${jar_file_target}" "${jar_file_target_symlink}"
-        fi
+    # If the "main" JAR file does not exist, create it by symlinking the first
+    # passed JAR file to its filename.
+    local jar_file_target_main=$(which_installed_jar_file_for_this_exheres)
+    if [[ ! -f "${jar_file_target_main}" ]]; then
+        echo "ln -s ${jar_file_target_first} ${jar_file_target_main}"
+        dosym      "${jar_file_target_first}" "${jar_file_target_main}"
     fi
 }
 
-# void javafix_install_jar_symlinks(char *jar_filename1, char *jar_filename2, ...)
+# void javafix_install_jar_symlinks(
+#     char *src_jar_filename1, char *src_jar_filename2, ...)
 #
-# Symlink the passed jar files to relative filenames having the same basename sans
-# version under the installation directory for this exheres: usually,
-# "/usr/share/${PN}/${SLOT}/".
-#
-# Passed jar files must already have been installed under ${IMAGE} prior to
-# calling this function. Example:
+# Symlink the passed source jar files to relative filenames having the same
+# basename sans version under the installation directory for this exheres: i.e.,
+# "/usr/share/${PN}/${SLOT}/". Note that the passed files must be installed
+# under "${IMAGE}" prior to calling this function. Example:
 #
 #     # Install "lib/${PNV}.jar" to "/opt/jetty/lib/${PNV}.jar".
 #     insinto "/opt/jetty"
@@ -551,7 +571,7 @@ javafix_install_jar_symlinks() {
 
     local jar_file_source jar_file_target
     for   jar_file_source in "${@}"; do
-        jar_file_target="${jar_dir_target}/"$(basename "${jar_file_source/${JAVA_JAR_PARAMETER_VERSION_PATTERN}/.jar}")
+        jar_file_target="${jar_dir_target}"/$(javafix_get_deversioned_jar_basename "${jar_file_source}")
         echo "ln -s ${jar_file_source} ${jar_file_target}"
         dosym      "${jar_file_source}" "${jar_file_target}"
     done
@@ -596,10 +616,8 @@ javafix_install_jar_as() {
     illegal_in_global_scope
     [[ ${#} -eq 2 ]] || die_unless_nonfatal "exactly two arguments needed"
 
-    local jar_file_source="${1}"
-    local jar_file_target="${2}"
-
     # Ignore absolute paths and version specifiers in target jar filenames.
+    local jar_file_source="${1}" jar_file_target="${2}"
     if [[ ${jar_file_target:0:1} = / ]]; then
         jar_file_target="${jar_file_target##*/}"
     fi
@@ -633,9 +651,9 @@ javafix_install_jar_as() {
 which_installed_jar_dir() {
     [[ ${#} -eq 1 ]] || die_unless_nonfatal "one argument needed"
 
-    local    JAR_DIR=$(which_installed_jar_dir_nonfatal "${@}")
-    [[ -d "${JAR_DIR}" ]] || die_unless_nonfatal "${JAR_DIR} not found"
-    echo  "${JAR_DIR}"
+    local    jar_dir=$(which_installed_jar_dir_nonfatal "${@}")
+    [[ -d "${jar_dir}" ]] || die_unless_nonfatal "\"${jar_dir}\" not found"
+    echo  "${jar_dir}"
 }
 
 # char *which_installed_jar_dir_nonfatal(char *exheres_name)
@@ -677,9 +695,24 @@ which_installed_jar_dir_nonfatal() {
 # establishing the expected parent directory. As above, for safety, this
 # function dies when the file does not exist.
 which_installed_jar_file() {
-    local    JAR_FILE=$(which_installed_jar_file_nonfatal "${@}")
-    [[ -f "${JAR_FILE}" ]] || die_unless_nonfatal "${JAR_FILE} not found"
-    echo  "${JAR_FILE}"
+    local jar_file=$(which_installed_jar_file_nonfatal "${@}")
+
+    # If the file is not found, it may have been installed under a versioned
+    # filename. This should never happen, but... there's no harm in checking,
+    # aside from the slight cost of globbing.
+    if [[ ! -f "${jar_file}" ]]; then
+        local jar_file_matches=(
+            "${jar_file%\.jar}-"${JAVA_VERSION_GLOB}".jar" )
+
+        # If at least one actual file matches the above glob, then return the
+        # first match.
+        if [[ "${#jar_file_matches[@]}" -ge 1 ]]
+        then jar_file="${jar_file_matches[1]}"
+        else die_unless_nonfatal "\"${jar_file}\" not found"
+        fi
+    fi
+
+    echo "${jar_file}"
 }
 
 # char *which_installed_jar_file_nonfatal(char *jar_file)
@@ -696,30 +729,32 @@ which_installed_jar_file_nonfatal() {
     [[ ${#} -eq 2 ]] || die_unless_nonfatal "one or two arguments needed"
     [[ -n "${1}"  ]] || die_unless_nonfatal "non-null argument needed"
 
-    local JAR_FILENAME EXHERES_NAME
+    local jar_name exheres_name
 
     if   [[ ${#} -eq 1 ]]
-    then JAR_FILENAME="${1}"
-    else JAR_FILENAME="${2}"; EXHERES_NAME="${1}"
+    then jar_name="${1}"
+    else jar_name="${2}"; exheres_name="${1}"
     fi
 
-    local JAR_BASENAME                         # filename sans absolute path
-    if [[ ${JAR_FILENAME:0:1} = / ]]; then
-        ewarn "\"${JAR_FILENAME}\" not a relative jar filename; ignoring path"
-        JAR_BASENAME="${JAR_FILENAME##*/}"
-    else
-        JAR_BASENAME="${JAR_FILENAME}"
+    # Set the filename sans absolute path.
+    if [[ ${jar_name:0:1} = / ]]; then
+        ewarn "\"${jar_name}\" not a relative jar filename; ignoring path"
+        jar_name="${jar_name##*/}"
     fi
 
-    local JAR_ROOTNAME="${JAR_BASENAME%.jar}"  # filename sans path and type
+    # Set the filename sans absolute path and type.
+    jar_name="${jar_name%.jar}"
 
-    if [[ -z "${EXHERES_NAME}" ]]
-    then EXHERES_NAME="${JAR_ROOTNAME}"
+    # Set the exheres name to the current filename, if not passed.
+    if [[ -z "${exheres_name}" ]]
+    then exheres_name="${jar_name}"
     fi
 
-    # ${JAR_ROOTNAME} could still contain a ':'-suffixed slot number. (Cut that.)
-    local JAR_TRUENAME="${JAR_ROOTNAME%:*}"    # filename sans path, type, slot
-    echo $(which_installed_jar_dir_nonfatal "${EXHERES_NAME}")"/${JAR_TRUENAME}.jar"
+    # Set the filename sans path, type, and ':'-suffixed slot.
+    jar_name="${jar_name%:*}"
+
+    # Return the absolute path to this file.
+    echo $(which_installed_jar_dir_nonfatal "${exheres_name}")"/${jar_name}.jar"
 }
 
 # ....................{ LOCATERS ~~ this exheres           }....................
@@ -1034,4 +1069,15 @@ register_mozplugin() {
         "${mozilla_plugins_dir}/${1##*/}" \
         "${plugin_dir}"
 }
+
+#FIXME: Obsolete.
+#       local jar_file_current jar_basename_current \
+#          jar_dir=$(dirname "${jar_file}") \
+#          jar_basename=$(basename "${jar_file}")
+#       for jar_file_current in "${jar_dir}"/*; do
+#           jar_basename_current=$(javafix_get_deversioned_jar_basename "${jar_file_current}")
+
+#           if [[ ${jar_basename} == ]]; then
+#           fi
+#       done
 

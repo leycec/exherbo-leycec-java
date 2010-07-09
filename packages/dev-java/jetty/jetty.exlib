@@ -32,7 +32,6 @@ DEPENDENCIES="
 # !!! IMPORTANT !!! This must be a duplicate of the "home" path in the
 # "metadata/accounts/users/jetty.conf" file for this Exherbo repository.
 JETTY_HOME="/opt/jetty"
-
 JETTY_JAR_DIR="lib"
 JETTY_JAR_FILE="${JETTY_JAR_DIR}/${PNV}.jar"
 JETTY_UTIL_JAR_FILE="${JETTY_JAR_DIR}/${PN}-util-${PV}.jar"
@@ -51,7 +50,6 @@ JETTY_HOME=${JETTY_HOME}
 EOF
 
     # Install jar files with Eclipse-compatible OSGi manifests.
-    echo ">>> Correcting jar file manifests"
     javafix_replace_jar_manifest "${JETTY_JAR_FILE}"      "${FILES}/MANIFEST.MF"
     javafix_replace_jar_manifest "${JETTY_UTIL_JAR_FILE}" "${FILES}/MANIFEST-util.MF"
 
@@ -71,7 +69,7 @@ EOF
     doins -r "resources/"
 
     # Exherbo exheres expect Jetty jars in the customary directory,
-    # "/usr/share/jetty/${SLOT/". Symlink from the above directory here.
+    # "/usr/share/jetty/${SLOT}/". Symlink the above directory here.
     javafix_install_jar_symlinks \
         "${JETTY_HOME}/${JETTY_JAR_FILE}" \
         "${JETTY_HOME}/${JETTY_UTIL_JAR_FILE}"
