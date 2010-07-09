@@ -1,9 +1,12 @@
 # Copyright 2010 Cecil Curry <leycec@gmail.com>
 # Distributed under the terms of the GNU General Public License v2
 
-require antefix
+# Do not implicitly remove all JAR files. Cytoscape comes bundled with an
+# astonishing array of JAR file dependencies, several of which Exherbo has no
+# exheres for.
+require antefix [ clean_jar_files=false ]
 #xport_exlib_phases src_unpack src_prepare src_install pkg_postinst
-export_exlib_phases src_prepare src_install
+export_exlib_phases src_unpack src_prepare src_install
 
 BUGS_TO="leycec@gmail.com"
 
@@ -30,6 +33,15 @@ UPSTREAM_RELEASE_NOTES="${HOMEPAGE}/cyto_${MY_PVMM}_features.php [[ lang = en ]]
 LICENCES="LGPL-2.1"
 MYOPTIONS=""
 
+#FIXME: Astonishingly, this is not the full set of all Cytoscape dependencies.
+#All remaining dependencies are non-trivial to implement as exheres, either due
+#to circular dependencies (e.g., jaxen and jdom) or transitive dependencies
+#(e.g., itext). Of course, this should be corrected.
+MY_BUILD_JAR_DEPENDENCIES=(
+"        dev-java/relaxng-datatype:1
+        dev-java/xalan-java
+        dev-java/xsdlib:0"
+)
 DEPENDENCIES="
     build:
         dev-java/relaxng-datatype:1
@@ -47,24 +59,109 @@ DEPENDENCIES="
         dev-java/swing-layout:1
         dev-java/tclib:1
         dev-java/xmlstreambuffer:1
+        dev-java/xml-commons-resolver
     build+test:
         dev-java/junit:4
 "
-#   build+run:
-#       dev-java/jsr173
-
-#       dev-java/batik[>=1.6]
-
-#       dev-java/itext
-#       dev-java/jdom:1
-#       dev-java/jsr181
-#       dev-java/jsr250
-#       java-virtuals/saaj-api
 
 WORK="${WORKBASE}"
 
+# JAR file specifiers for all dependencies to be symlinked into Cytoscape's
+# "lib/" directory, below.
+CYTOSCAPE_SRC_PREPARE_JARS=(
+    # build:
+        "relaxng-datatype:1"
+        "xalan-java xalan"
+        "xsdlib:0"
+    # build+run:
+        "biojava:1"
+        "colt:1"
+        "concurrent:1"
+        "fastinfoset:1"
+        "jakarta-regexp"
+        "piccolo2d:1.3"
+        "sjsxp:1"
+        "stax-ex:1"
+        "swing-layout:1"
+        "tclib:1"
+        "xmlstreambuffer:1"
+        "xml-commons-resolver resolver"
+    # build+test:
+        "junit:4"
+)
+
 #DEFAULT_SRC_PREPARE_PATCHES=( "${FILES}/CMakeLists.txt.patch" )
 #CMAKE_SRC_CONFIGURE_OPTION_ENABLES=( "doc DOXYGEN" )
+
+cytoscape_src_unpack() {
+    antefix_src_unpack
+
+    # Absolute path to the directory having JAR file dependencies.
+    local cytoscape_lib_dir="${WORK}/lib"
+
+    # Remove extraneous JAR files.
+    local redundant_lib_files=(
+        # JAR files already provided by the above dependencies.
+        "FastInfoset.jar"
+        "colt.jar"
+        "commons-cli-1.x-cytoscape-custom.jar"
+        "concurrent.jar"
+        "junit.jar"
+        "piccolo.jar"
+        "resolver.jar"
+        "sjsxp.jar"
+        "stax-ex.jar"
+        "streambuffer.jar"
+        "tclib.jar"
+        # The Java Activation Framework (JAF), already provided by the JDK/JRE.
+        "activation.jar"
+        # Sun's embedded HTTP server, already provided by the JDK/JRE.
+        "http.jar"
+        # Install4J, only required when building a native installation for
+        # online distribution. 
+        "i4jruntime.jar"
+        # The Java Architecture for XML Binding (JAXB) API, already provided by
+        # the JDK/JRE. (This is just the API, not the implementation of this
+        # API.)
+        "jaxb-api.jar"
+        # The Java API for XML Web Services (JAXWS), already provided by
+        # the JDK/JRE. (This is just the API, not the implementation of this
+        # API.)
+        "jaxws-api.jar"
+        # The Java Network Launching Protocol (JNLP), already provided by
+        # the JDK/JRE.
+        "jnlp.jar"
+        # JSR 173: Streaming API for XML, already provided by the JDK/JRE.
+        "jsr173-api.jar"
+        # JSR 181: Web Services Metadata for the Java Platform, already provided
+        # by the JDK/JRE.
+        "jsr181-api.jar"
+        # JSR 250: Common Annotations for the Java Platform, already provided by
+        # the JDK/JRE.
+        "jsr250-api.jar"
+        # The SOAP with Attachments API for Java (SAAJ), already provided by
+        # the JDK/JRE. (This is just the API, not the implementation of this
+        # API.)
+        "saaj-api.jar"
+    )
+    local redundant_lib_file
+    for   redundant_lib_file in "${redundant_lib_file[@]}"; do
+        edo rm "${cytoscape_lib_dir}/${redundant_lib_file}"
+    done
+
+    # Remove extraneous JAR files having versioned filenames.
+    edo rm "${cytoscape_lib_dir}/"biojava-*.jar
+
+    # Remove all Jalopy JAR files. This exheres never needs them.
+    edo rm -rf "${cytoscape_lib_dir}/jalopy"
+
+    # Remove duplicated JAR files from the "extra-jars" path.
+    edo rm "${WORK}/extra-jars/"{colt.jar,coltginy.jar}
+
+    # Symlink external buildtime JAR file dependencies into Cytoscape's "lib/".
+    javafix_prepare_jar_symlinks \
+        "${cytoscape_lib_dir}" "${CYTOSCAPE_SRC_PREPARE_JARS[@]}"
+}
 
 cytoscape_src_prepare() {
     antefix_src_prepare
@@ -72,5 +169,11 @@ cytoscape_src_prepare() {
 
 cytoscape_src_install() {
     antefix_src_install
+
+    insinto "/usr/share/pixmaps"
+    newins "images/icon100.png" "${PN}.png"
+
+    docinto "pdf"
+    dodoc "docs/pdf/manual.pdf"
 }
 
