@@ -3,6 +3,6 @@
 
 require biojava-bytecode [ svn_revision="20081007" ]
 
-SLOT="1"
+SLOT="1.6.1"
 PLATFORMS="~amd64 ~x86"
 

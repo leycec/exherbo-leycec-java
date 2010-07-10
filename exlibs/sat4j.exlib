@@ -8,7 +8,7 @@
 # several independent source tarballs, each providing independent functionality.
 # The build process for each tarball is the same, however. Thus, this exlib.
 
-# ....................{ EXHERES                            }....................
+# ....................{ EXLIB                              }....................
 # Example require statement for "sat4j-core-2.1.1.exheres-0":
 #
 #     # SAT4J 2.1.1 was completed on August 26th, 2009 and requires

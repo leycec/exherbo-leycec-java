@@ -13,21 +13,25 @@
 # memory and an indeterminate amount of disk space. Such is life, Exherbo-style. 
 #
 # --------------------( OSGi                               )--------------------
-# This exlib requires both OSGi and non-OSGi Java dependencies. Both are
-# encapsulated in jar files and otherwise provide an identical directory layout
-# within those jar files. Superficially therefore, OSGi-conformant jar files and
-# non-OSGi-conformant jar files perform identical. The difference lies solely in
-# the contents of the "META-INF/MANIFEST.MF" file. In non-OSGi-conformant jar
-# files, this manifest has arbritrarily many key value pairs having arbitrary
-# key names and values; in other words, no conformance to a helpful standard. In
-# OSGi-conformant jar files, however, this manifest has key names and values
-# conforming to well-defined industry standards; in other words, predictable.
+# This exlib requires both OSGi and non-OSGi Java dependencies. 
 #
-# What's the problem? Most Java projects still ship non-OSGi-conformant jar
-# files. For the most part, Eclipse requires absolutely OSGi-conformant jar
-# files: even for old projects known not to ship such jar files. Other exheres
-# must ensure, therefore, that their "src_install" phase replaces non-OSGi
-# "META-INF/MANIFEST.MF" files bundled in their output jar files with OSGi
+# OSGi is a component framework for managing Java component lifecycle. Like non-
+# OSGi Java components, OSGi Java components are encapsulated within a JAR file.
+# OSGi JAR files are superficially identical to non-OSGi JAR files: both
+# contain a manifest file (i.e., "META-INF/MANIFEST.MF") and class and resource
+# files. In fact, the only difference between the two reduces to their manifest
+# files. In non-OSGi JAR files, the manifest file has arbritrary key-value
+# pairs having arbitrary key names and values: in other words, no conformance to
+# rigid standards. In OSGi JAR files, however, key-value pairs in the manifest
+# file conform to industry standards. This standard describes the services
+# exported by the JAR file, JAR file dependencies imported by the JAR file, and
+# so forth.
+#
+# What's the problem? Most Java projects still ship non-OSGi JAR files. For the
+# most part, Eclipse absolutely requires OSGi JAR files -- even for old projects
+# known not to ship such files. Other exheres on which this exheres directly
+# depends must ensure, therefore, their "src_install" phase replaces non-OSGi
+# "META-INF/MANIFEST.MF" files embedded in output JAR files with OSGi
 # "META-INF/MANIFEST.MF" files.
 #
 # --------------------( SEE ALSO                           )--------------------

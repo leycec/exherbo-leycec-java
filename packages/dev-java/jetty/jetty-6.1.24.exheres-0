@@ -18,7 +18,6 @@ DOWNLOADS="http://dist.codehaus.org/${PN}/${PNV}/${PNV}.zip"
 
 # Technically, this only applies to the most recent version of Jetty 6.x.x.
 UPSTREAM_DOCUMENTATION="${HOMEPAGE}/${PN}-${SLOT}/apidocs/index.html [[ lang = en ]]"
-
 UPSTREAM_CHANGELOG="http://source.icu-project.org/repos/icu/${PN}/tags/release-${DASHED_PV}/APIChangeReport.html"
 
 # Jetty 6.x.x is released under a single license, as opposed to Jetty 7.x.x.
