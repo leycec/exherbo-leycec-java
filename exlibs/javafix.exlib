@@ -459,18 +459,24 @@ javafix_get_deversioned_jar_basename() {
 #
 # Jar specifiers are compact strings uniquely identifying external jar file
 # dependencies, as described by the "which_installed_jar_file_from_specifier"
-# function. Example:
+# function.
+#
+# Examples:
 #
 #      # Symlinks "/usr/share/ecocide/ecocide.jar" into "lib/".
 #      javafix_prepare_jar_symlinks("lib" "ecocide")
+#
 #      # Symlinks "/usr/share/ecocide/4/ecocide.jar" into "lib/".
 #      javafix_prepare_jar_symlinks("lib" "ecocide:4")
+#
 #      # Tries "/usr/share/moa-core/moa-core.jar", which is not found. Then
 #      # tries "/usr/share/moa/moa-core.jar", which is found. Finally,
 #      # symlinks "/usr/share/moa/moa-core.jar" into "lib/".
 #      javafix_prepare_jar_symlinks("lib" "moa-core")
+#
 #      # Symlinks "/usr/share/ecocide/1080.jar" into "lib/".
 #      javafix_prepare_jar_symlinks("lib" "ecocide 1080")
+#
 #      # Symlinks "/usr/share/ecocide/1.2/1080.jar" into "lib/".
 #      javafix_prepare_jar_symlinks("lib" "ecocide:1.2 1080")
 #
@@ -696,23 +702,7 @@ which_installed_jar_dir_nonfatal() {
 # function dies when the file does not exist.
 which_installed_jar_file() {
     local jar_file=$(which_installed_jar_file_nonfatal "${@}")
-
-    # If the file is not found, it may have been installed under a versioned
-    # filename. This should never happen, but... there's no harm in checking,
-    # aside from the slight cost of globbing.
-    if [[ ! -f "${jar_file}" ]]; then
-        local jar_file_matches=(
-            "${jar_file%\.jar}-"${JAVA_VERSION_GLOB}".jar" )
-
-        # If at least one actual file matches the above glob, then return the
-        # first match.
-        if [[ "${#jar_file_matches[@]}" -ge 1 ]]
-        then jar_file="${jar_file_matches[1]}"
-        else die_unless_nonfatal "\"${jar_file}\" not found"
-        fi
-    fi
-
-    echo "${jar_file}"
+    echo $(javafix_glob_installed_jar_file "${jar_file}")
 }
 
 # char *which_installed_jar_file_nonfatal(char *jar_file)
@@ -755,6 +745,84 @@ which_installed_jar_file_nonfatal() {
 
     # Return the absolute path to this file.
     echo $(which_installed_jar_dir_nonfatal "${exheres_name}")"/${jar_name}.jar"
+}
+
+# char *javafix_glob_installed_jar_file(char *jar_filename)
+#
+# Return the absolute path to a jar file installed to the current system and
+# having the passed jar filename OR something resembling the passed jar
+# filename. This function applies the following in-order heuristics:
+#
+# * If the passed file is found, this function returns it as is.
+# * If the passed file is not found, this function...
+#   * ...globs the passed file's path for a filename having the same prefix and
+#     filetype, but separated by a version specifier. If at least one file
+#     matches, this function returns the first match. Otherwise, this
+#     function...
+#   * ...globs the path "/usr/share/$(basename ${jar_filename%%-*})/" (that is,
+#     a directory whose name is the passed jar filename up to but not including
+#     the first hyphen) for a filename having the same basename. If such a file
+#     exists, this function returns that file. Otherwise, this function...
+#   * ...dies.
+#
+# Example:
+#
+#     # Suppose the "jakarta-regexp" exheres installed its jar file to
+#     # "/usr/share/jakarta-regexp/jakarta-regexp-1.5.jar" instead of to
+#     # "/usr/share/jakarta-regexp/jakarta-regexp.jar". It shouldn't have, of
+#     # course; but suppose it did.
+#     #
+#     # This function successfully globs for that file, printing
+#     # "/usr/share/jakarta-regexp/jakarta-regexp-1.5.jar".
+#     javafix_glob_installed_jar_file "jakarta-regexp"
+#
+#     # Suppose the "jakarta-regexp" exheres installed another jar file to
+#     # Tries "/usr/share/jakarta-regexp/jakarta-regexp-core.jar". This is
+#     # quite permissible, for exheres installing multiple jar files. 
+#     #
+#     # This function successfully globs for that file, printing
+#     # "/usr/share/jakarta-regexp/jakarta-regexp-core.jar".
+#     javafix_glob_installed_jar_file "jakarta-regexp-core"
+#
+# Note that, ideally, no Java exeheres should ever install versioned filenames
+# but that, due to anarchic principles comprising the core of the Exherbo
+# philosophy, this cannot be enforced. (Someone's always going to be a wise
+# guy.)
+#
+# Note that, lastly, there is little harm in performing these globs, aside from
+# the slight cost of doing so. The alternative is death.
+javafix_glob_installed_jar_file() {
+    illegal_in_global_scope
+    [[ ${#} -eq 1 ]] || die_unless_nonfatal "exactly one argument needed"
+
+    local jar_file="${1}"
+    [[ -f "${jar_file}" ]] && echo "${jar_file}" && return
+
+    # By default, Bash glob expressions return the glob expression itself
+    # if the glob matches no files. Of course, this is horrible, since it
+    # prevents us from testing whether or not the glob matched.
+    #
+    # Disable such nonsense.
+    shopt -s nullglob
+
+    # If at least one actual file matches the glob, return the first.
+    local jar_file_matches=(
+        "${jar_file%\.jar}-"${JAVA_VERSION_GLOB}".jar" )
+    [[ "${#jar_file_matches[@]}" -ge 1 ]] && \
+        echo "${jar_file_matches[0]}" && return
+
+    # If this filename has a hyphen, reset the exheres name to the part of the
+    # filename preceding the hyphen. If the resultant file exists, return it.
+    if [[ "${jar_file}" =~ ^([^-]+)- ]]; then
+        local exheres_name="${BASH_REMATCH[1]}"
+        local jar_name="${jar_name##*/}"
+#       local jar_rootname=$(basename "${jar_file%.jar}")
+        jar_file=$(which_installed_jar_file_nonfatal "${exheres_name}" "${jar_name}")
+        [[ -f "${jar_file}" ]] && echo "${jar_file}" && return
+    fi
+
+    # No files matched.
+    die_unless_nonfatal "\"${jar_file}\" not found"
 }
 
 # ....................{ LOCATERS ~~ this exheres           }....................
@@ -830,14 +898,6 @@ javafix_get_exheres_name_for_this_exheres() {
 #    # Returns "/usr/share/ecocide/4/ecocide.jar".
 #    which_installed_jar_file_from_spec("ecocide:4")
 #
-#   If the resultant path is not found, additionally tries
-#   "/usr/share/$(basename ${jar_spec%%-*})/". This is the first part of the
-#   passed jar specifier up to but not including the first hyphen. Example:
-#
-#    # Tries "/usr/share/moa-core/moa-core.jar", which is not found. Then
-#    # tries "/usr/share/moa/moa-core.jar", which is found and returned.
-#    which_installed_jar_file_from_spec("moa-core")
-#
 # * If a string having whitespace, the string is split on the first whitespace
 #   in that string. The first half of the resultant split signifies the
 #   exheres name and optional slot, while the second half signifies the jar
@@ -856,9 +916,8 @@ javafix_get_exheres_name_for_this_exheres() {
 #
 # This function dies if no appropriate jar file can be found.
 which_installed_jar_file_from_spec() {
-    local    JAR_FILE=$(which_installed_jar_file_from_spec_nonfatal "${@}")
-    [[ -f "${JAR_FILE}" ]] || die_unless_nonfatal "${JAR_FILE} not found"
-    echo  "${JAR_FILE}"
+    local jar_file=$(which_installed_jar_file_from_spec_nonfatal "${@}")
+    echo $(javafix_glob_installed_jar_file "${jar_file}")
 }
 
 # char *which_installed_jar_file_from_spec_nonfatal(char *jar_spec)
@@ -872,31 +931,24 @@ which_installed_jar_file_from_spec_nonfatal() {
     illegal_in_global_scope
     [[ ${#} -eq 1 ]] || die_unless_nonfatal "exactly one argument needed"
 
-    local JAR_SPEC="${1}"
-    local JAR_FILE
+    local jar_spec="${1}" jar_file
 
     # If an absolute path, use as is.
-    if [[ "${JAR_SPEC:0:1}" = / ]]; then
-        JAR_FILE="${JAR_SPEC}"
+    if [[ "${jar_spec:0:1}" = / ]]; then
+        jar_file="${jar_spec}"
     # Otherwise, get the absolute path.
     else
         # If split on whitespace, grep the exheres name from jar filename in
         # the passed jar specifier via Bash regexp matching.
-        if [[ "${JAR_SPEC}" =~ ^([^[:space:]]+)[[:space:]]+(.+)$ ]]; then
-            JAR_FILE=$(which_installed_jar_file_nonfatal "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}")
+        if [[ "${jar_spec}" =~ ^([^[:space:]]+)[[:space:]]+(.+)$ ]]; then
+            jar_file=$(which_installed_jar_file_nonfatal "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}")
         # Otherwise, the jar filename is the passed jar specifier.
         else
-            JAR_FILE=$(which_installed_jar_file_nonfatal "${JAR_SPEC}" "${JAR_SPEC}")
-
-            # If not found but has a hyphen, grep the exheres name again.
-            if [[ ! -f "${JAR_FILE}" ]] &&
-               [[ "${JAR_SPEC}" =~ ^([^-]+)- ]]; then
-               JAR_FILE=$(which_installed_jar_file_nonfatal "${BASH_REMATCH[1]}" "${JAR_SPEC}")
-            fi
+            jar_file=$(which_installed_jar_file_nonfatal "${jar_spec}" "${jar_spec}")
         fi
     fi
 
-    echo "${JAR_FILE}"
+    echo "${jar_file}"
 }
 
 # ....................{ MANIFEST.MF                        }....................
@@ -1080,4 +1132,14 @@ register_mozplugin() {
 #           if [[ ${jar_basename} == ]]; then
 #           fi
 #       done
+
+#       echo ">>> ${jar_file} not found; globbing..."
+#             jar_file_matches=( "${jar_file%\.jar}-"*".jar" )
+#       echo ">>> globbed: ${jar_file_matches[@]}"
+
+    # If not found but has a hyphen, grep the exheres name again.
+#           if [[ ! -f "${jar_file}" ]] &&
+#              [[ "${jar_spec}" =~ ^([^-]+)- ]]; then
+#              jar_file=$(which_installed_jar_file_nonfatal "${BASH_REMATCH[1]}" "${jar_spec}")
+#           fi
 

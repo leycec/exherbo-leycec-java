@@ -276,7 +276,7 @@ antefix_src_test() {
 }
 
 antefix_src_install() {
-    # Invoke Ant, which probably generates jar files prior to calling the parent
+    # Invoke Ant. This generates jar files prior to calling the parent
     # "src_install" function that actually installs these files.
     if [[ -n "${ANT_SRC_INSTALL_PARAMS[@]}" ]]; then
         exant "${ANT_BUILD_XML}" \
