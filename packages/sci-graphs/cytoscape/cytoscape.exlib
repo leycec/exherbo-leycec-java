@@ -5,8 +5,7 @@
 # astonishing array of JAR file dependencies, several of which Exherbo has no
 # exheres for.
 require antefix [ clean_jar_files=false ]
-#xport_exlib_phases src_unpack src_prepare src_install pkg_postinst
-export_exlib_phases src_unpack src_prepare src_install
+export_exlib_phases src_unpack src_prepare src_test src_install pkg_postinst
 
 BUGS_TO="leycec@gmail.com"
 
@@ -37,19 +36,24 @@ MYOPTIONS=""
 #All remaining dependencies are non-trivial to implement as exheres, either due
 #to circular dependencies (e.g., jaxen and jdom) or transitive dependencies
 #(e.g., itext). Of course, this should be corrected.
-MY_BUILD_JAR_DEPENDENCIES=(
-"        dev-java/relaxng-datatype:1
-        dev-java/xalan-java
-        dev-java/xsdlib:0"
-)
+
+# Cytoscape currently requires old slots of the following exheres:
+#
+# * BioJava:1.4.
+# * JUnit:3.
+#
+# Unfortunately, this BioJava slot is so old as to be pointless for Exherbo to
+# provide an exheres for. (No other exheres needs BioJava:1.4, and no other
+# exheres ever will.) So, this exheres just leaves Cytoscape's BioJava JAR file.
 DEPENDENCIES="
     build:
         dev-java/relaxng-datatype:1
         dev-java/xalan-java
+        dev-java/Xerces-J
         dev-java/xsdlib:0
     build+run:
-        dev-java/biojava:1
         dev-java/colt:1
+        dev-java/commons-cli:1
         dev-java/concurrent:1
         dev-java/fastinfoset:1
         dev-java/jakarta-regexp[>=1.4]
@@ -61,21 +65,44 @@ DEPENDENCIES="
         dev-java/xmlstreambuffer:1
         dev-java/xml-commons-resolver
     build+test:
-        dev-java/junit:4
+        dev-java/junit:3
 "
+#       dev-java/biojava:1.7
 
 WORK="${WORKBASE}"
 
+# Absolute path to the directory having JAR file dependencies.
+CYTOSCAPE_LIB_DIR="${WORK}/lib"
+
+# Absolute path to the directory having buildtime JAR file dependencies.
+CYTOSCAPE_BUILD_LIB_DIR="${CYTOSCAPE_LIB_DIR}/build-libs"
+
+# Absolute path to the directory having runtime shell scripts.
+CYTOSCAPE_SCRIPT_DIR="${WORK}/resources/bin"
+
+# Absolute path to the various runtime shell scripts.
+CYTOSCAPE_LAUNCH_SCRIPT="${CYTOSCAPE_SCRIPT_DIR}/${PN}.sh" \
+CYTOSCAPE_CONFIG_SCRIPT="${CYTOSCAPE_SCRIPT_DIR}/gen_vmoptions.sh"
+
+# Absolute path to the directory under "${IMAGE}" to which Cytoscape installs.
+CYTOSCAPE_HOME="/usr/share/${PN}"
+CYTOSCAPE_HOME_IMAGE="${IMAGE}/${CYTOSCAPE_HOME}"
+
+# Absolute path to the directory under "${IMAGE}" to which Cytoscape installs a
+# configuration file. (Note, the "${HOME}" is not actually interpolated into
+# this path, but resolved at runtime.)
+CYTOSCAPE_CONFIG_FILE='${HOME}'"/.${PN}.vmoptions"
+
+# Filename of the script under "/usr/bin" responsible for launching Cytoscape.
+CYTOSCAPE_LAUNCH_FILENAME="${PN}"
+
 # JAR file specifiers for all dependencies to be symlinked into Cytoscape's
-# "lib/" directory, below.
-CYTOSCAPE_SRC_PREPARE_JARS=(
-    # build:
-        "relaxng-datatype:1"
-        "xalan-java xalan"
-        "xsdlib:0"
+# "lib" directory.
+CYTOSCAPE_DEPENDENT_JARS=(
     # build+run:
-        "biojava:1"
+#       "biojava:1"
         "colt:1"
+        "commons-cli:1"
         "concurrent:1"
         "fastinfoset:1"
         "jakarta-regexp"
@@ -87,93 +114,219 @@ CYTOSCAPE_SRC_PREPARE_JARS=(
         "xmlstreambuffer:1"
         "xml-commons-resolver resolver"
     # build+test:
-        "junit:4"
+        "junit:3"
 )
 
-#DEFAULT_SRC_PREPARE_PATCHES=( "${FILES}/CMakeLists.txt.patch" )
-#CMAKE_SRC_CONFIGURE_OPTION_ENABLES=( "doc DOXYGEN" )
+# JAR file specifiers for all dependencies to be symlinked into Cytoscape's
+# "build-libs" directory.
+CYTOSCAPE_DEPENDENT_BUILD_JARS=(
+    # build:
+        "relaxng-datatype:1"
+        "xalan-java xalan"
+        "Xerces-J xercesImpl"
+        "xsdlib:0"
+)
+
+# JAR files to be removed from Cytoscape's "lib" directory, prior to symlinking
+# the above JAR file specifiers in.
+CYTOSCAPE_REDUNDANT_JAR_FILES=(
+    # JAR files already provided by the above dependencies.
+    "FastInfoset.jar"
+    "colt.jar"
+    "concurrent.jar"
+    "junit.jar"
+    "piccolo.jar"
+    "resolver.jar"
+    "sjsxp.jar"
+    "stax-ex.jar"
+    "streambuffer.jar"
+    "tclib.jar"
+    # The Java Activation Framework (JAF), already provided by the JDK/JRE.
+    "activation.jar"
+    # Sun's embedded HTTP server, already provided by the JDK/JRE.
+    "http.jar"
+    # The Java Architecture for XML Binding (JAXB) API, already provided by
+    # the JDK/JRE. (This is just the API, not the implementation of this
+    # API.)
+    "jaxb-api.jar"
+    # The Java API for XML Web Services (JAXWS), already provided by
+    # the JDK/JRE. (This is just the API, not the implementation of this
+    # API.)
+    "jaxws-api.jar"
+    # The Java Network Launching Protocol (JNLP), already provided by
+    # the JDK/JRE.
+    "jnlp.jar"
+    # JSR 173: Streaming API for XML, already provided by the JDK/JRE.
+    "jsr173_api.jar"
+    # JSR 181: Web Services Metadata for the Java Platform, already provided
+    # by the JDK/JRE.
+    "jsr181-api.jar"
+    # JSR 250: Common Annotations for the Java Platform, already provided by
+    # the JDK/JRE.
+    "jsr250-api.jar"
+    # The SOAP with Attachments API for Java (SAAJ), already provided by
+    # the JDK/JRE. (This is just the API, not the implementation of this
+    # API.)
+    "saaj-api.jar"
+)
+
+# JAR files to be removed from Cytoscape's "build-libs" directory, prior to
+# symlinking the above JAR file specifiers in.
+CYTOSCAPE_REDUNDANT_BUILD_JAR_FILES=(
+    # JAR files already provided by the above dependencies.
+    "relaxngDatatype.jar"
+    "xalan.jar"
+    "xsdlib.jar"
+)
+
+# JAR file glob matching additional dependencies to be removed from Cytoscape's
+# "lib" directory. This is intended to match JAR files having versioned
+# filenames, which thus cannot be matched with a hardcoded string above.
+#CYTOSCAPE_REDUNDANT_JARS_GLOB='+(biojava|commons-cli|swing-layout)'
+CYTOSCAPE_REDUNDANT_JARS_GLOB='+(commons-cli|swing-layout)'
+
+# JAR file glob matching additional buildtime dependencies to be removed from
+# Cytoscape's "build-libs" directory.
+CYTOSCAPE_REDUNDANT_BUILD_JARS_GLOB='jakarta-regexp'
+
+#FIXME: Unit tests currently fail. I don't know why, however, as output is:
+#
+#     [junit] Tests run: 313, Failures: 0, Errors: 166, Time elapsed: 7.292 sec
+#     [junit] Test cytoscape.AllTests FAILED
+#
+# Note the "Failures: 0". More research required.
+ANT_PARAMS=( -Drelease.dir="${CYTOSCAPE_HOME_IMAGE}" )
+ANT_SRC_COMPILE_PARAMS=( compile )
+#ANT_SRC_TEST_PARAMS=( test )
+ANT_SRC_INSTALL_PARAMS=( release )
+
+DEFAULT_SRC_PREPARE_PATCHES=( "${FILES}/${SLOT}/build.xml.patch" )
 
 cytoscape_src_unpack() {
     antefix_src_unpack
 
-    # Absolute path to the directory having JAR file dependencies.
-    local cytoscape_lib_dir="${WORK}/lib"
-
     # Remove extraneous JAR files.
-    local redundant_lib_files=(
-        # JAR files already provided by the above dependencies.
-        "FastInfoset.jar"
-        "colt.jar"
-        "commons-cli-1.x-cytoscape-custom.jar"
-        "concurrent.jar"
-        "junit.jar"
-        "piccolo.jar"
-        "resolver.jar"
-        "sjsxp.jar"
-        "stax-ex.jar"
-        "streambuffer.jar"
-        "tclib.jar"
-        # The Java Activation Framework (JAF), already provided by the JDK/JRE.
-        "activation.jar"
-        # Sun's embedded HTTP server, already provided by the JDK/JRE.
-        "http.jar"
-        # Install4J, only required when building a native installation for
-        # online distribution. 
-        "i4jruntime.jar"
-        # The Java Architecture for XML Binding (JAXB) API, already provided by
-        # the JDK/JRE. (This is just the API, not the implementation of this
-        # API.)
-        "jaxb-api.jar"
-        # The Java API for XML Web Services (JAXWS), already provided by
-        # the JDK/JRE. (This is just the API, not the implementation of this
-        # API.)
-        "jaxws-api.jar"
-        # The Java Network Launching Protocol (JNLP), already provided by
-        # the JDK/JRE.
-        "jnlp.jar"
-        # JSR 173: Streaming API for XML, already provided by the JDK/JRE.
-        "jsr173-api.jar"
-        # JSR 181: Web Services Metadata for the Java Platform, already provided
-        # by the JDK/JRE.
-        "jsr181-api.jar"
-        # JSR 250: Common Annotations for the Java Platform, already provided by
-        # the JDK/JRE.
-        "jsr250-api.jar"
-        # The SOAP with Attachments API for Java (SAAJ), already provided by
-        # the JDK/JRE. (This is just the API, not the implementation of this
-        # API.)
-        "saaj-api.jar"
-    )
     local redundant_lib_file
-    for   redundant_lib_file in "${redundant_lib_file[@]}"; do
-        edo rm "${cytoscape_lib_dir}/${redundant_lib_file}"
+    for   redundant_lib_file in \
+        "${CYTOSCAPE_REDUNDANT_JAR_FILES[@]}"; do
+        edo rm "${CYTOSCAPE_LIB_DIR}/${redundant_lib_file}"
+    done
+
+    # Remove extraneous buildtime JAR files.
+    local redundant_build_lib_file
+    for   redundant_build_lib_file in \
+        "${CYTOSCAPE_REDUNDANT_BUILD_JAR_FILES[@]}"; do
+        edo rm "${CYTOSCAPE_BUILD_LIB_DIR}/${redundant_build_lib_file}"
     done
 
     # Remove extraneous JAR files having versioned filenames.
-    edo rm "${cytoscape_lib_dir}/"biojava-*.jar
+    edo rm "${CYTOSCAPE_LIB_DIR}/"${CYTOSCAPE_REDUNDANT_JARS_GLOB}-*.jar
+    edo rm "${CYTOSCAPE_BUILD_LIB_DIR}/"${CYTOSCAPE_REDUNDANT_BUILD_JARS_GLOB}-*.jar
 
-    # Remove all Jalopy JAR files. This exheres never needs them.
-    edo rm -rf "${cytoscape_lib_dir}/jalopy"
+    # Remove all Jalopy JAR files, as we never run the "jalopy" Ant task.
+    edo rm -rf "${CYTOSCAPE_LIB_DIR}/jalopy"
 
     # Remove duplicated JAR files from the "extra-jars" path.
     edo rm "${WORK}/extra-jars/"{colt.jar,coltginy.jar}
 
-    # Symlink external buildtime JAR file dependencies into Cytoscape's "lib/".
+    # Symlink external JAR file dependencies into Cytoscape.
     javafix_prepare_jar_symlinks \
-        "${cytoscape_lib_dir}" "${CYTOSCAPE_SRC_PREPARE_JARS[@]}"
+        "${CYTOSCAPE_LIB_DIR}" "${CYTOSCAPE_DEPENDENT_JARS[@]}"
+
+    # Symlink external buildtime JAR file dependencies into Cytoscape. Note this
+    # symlinks into a different directory than above to avoid bundling these JAR
+    # files with the final installed Cytoscape JAR file.
+    javafix_prepare_jar_symlinks \
+        "${CYTOSCAPE_BUILD_LIB_DIR}" "${CYTOSCAPE_DEPENDENT_BUILD_JARS[@]}"
 }
 
 cytoscape_src_prepare() {
     antefix_src_prepare
+
+    # Edit Cytoscape's main "build.xml" file to:
+    #
+    # * Prevent the "release" Ant task from depending on the "test" Ant task.
+    # * Prevent the "release" Ant task from installing Windows .bat files.
+    edo sed -r \
+        -e 's~(depends="jar), test"~\1"~' \
+        -e '/\.bat/d' \
+        -i "${ANT_BUILD_XML}"
+
+    # Edit scripts responsible for launching Cytoscape at runtime. Specifically:
+    #
+    # * Improve the logic by which these scripts get the Cytoscape home
+    #   directory, to ensure this logic "works" even when the script in question
+    #   is a symlink in "/usr/bin" to a script in "${CYTOSCAPE_HOME}".
+    # * Replace the relative path to the Cytoscape config file (i.e.,
+    #   "${CYTOSCAPE_HOME}/cytoscape.vmoptions") in these scripts with an
+    #   absolute path to the same file under "/etc" (i.e.,
+    #   "${CYTOSCAPE_CONFIG_FILE}").
+    edo sed -re 's~^(script_path=).+$~\1$(dirname $(readlink -f "$0"))~' \
+            -i "${CYTOSCAPE_LAUNCH_SCRIPT}"
+    local cytoscape_script
+    for   cytoscape_script in \
+        "${CYTOSCAPE_LAUNCH_SCRIPT}" "${CYTOSCAPE_CONFIG_SCRIPT}"; do
+        edo sed -re "s~${PN}\.vmoptions~\"${CYTOSCAPE_CONFIG_FILE}\"~" \
+                 -i "${cytoscape_script}"
+    done
+}
+
+cytoscape_src_test() {
+    #FIXME: This *should* work. Of course, it doesn't. Bruteforce it.
+#   sydboxcmd 'net/whitelist/connect/unix:///tmp/.X11-unix/X0'
+#   sydboxcmd "net/whitelist/bind/inet6://::1@0"
+    ewarn "Disabling network sandboxing..."
+    sydboxcmd 'sandunbox/net'
+    antefix_src_test
+    ewarn "Reenabling network sandboxing..."
+    sydboxcmd 'sandbox/net'
 }
 
 cytoscape_src_install() {
     antefix_src_install
 
-    insinto "/usr/share/pixmaps"
-    newins "images/icon100.png" "${PN}.png"
+    # The above call to the parent src_install() runs the "release" Ant task.
+    # Unfortunately, this task installs copies of the targets that jar file
+    # symlinks point to rather than the copies of the symlinks themselves.
+    # Ideally, this exlib would fix this by patching the main "build.xml" file
+    # to cease following symlinks when copying filesets. Unfortunately, since
+    # Java literally has no working knowledge of what a "symlink" is, this does
+    # not work.
+    #
+    # So, forcefully replace all installed JAR file dependencies with symlink-
+    # preserving copies here.
+    edo cp -df "${CYTOSCAPE_LIB_DIR}/"*.jar "${CYTOSCAPE_HOME_IMAGE}/lib/"
 
+    # Install the launch script. 
+    dodir "/usr/bin"
+    dosym "${CYTOSCAPE_HOME}/${PN}.sh" "/usr/bin/${CYTOSCAPE_LAUNCH_FILENAME}"
+
+    # Install environment variables. (Not strictly necessary, but several
+    # utility scripts appear to depend on it.)
+    hereenvd "60${PN}" <<EOF
+CYTOSCAPE_HOME=${CYTOSCAPE_HOME}
+EOF
+
+    # Install documentation. (Do not install "docs/html/manual.pdf", as that
+    # duplicates the well-structured content in "docs/help".)
+    edo rm -rf "${CYTOSCAPE_HOME_IMAGE}/docs"
     docinto "pdf"
     dodoc "docs/pdf/manual.pdf"
+    docinto "html"
+    dodoc "docs/help/"*
+
+    # Install miscellaneous.
+    insinto "/usr/share/pixmaps"
+    newins "images/icon100.png" "${PN}.png"
+}
+
+cytoscape_pkg_postinst() {
+    default
+
+    elog "Cytoscape has been installed to \"${CYTOSCAPE_HOME}\"."
+    elog
+    elog "Cytoscape is runnable via \"${CYTOSCAPE_LAUNCH_FILENAME}\" and configurable via"
+    elog "\"${CYTOSCAPE_CONFIG_FILE}\", implicitly created the first time you run"
+    elog "Cytoscape. Edit the latter if you recieve OutOfMemory exceptions."
 }
 

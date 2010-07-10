@@ -1,0 +1,27 @@
+Authors:  Cecil Curry <leycec@gmail.com>
+Upstream: no
+Synopsis: Excise the "jalopy" task. Its mere presence produces sydbox access
+violations, whenever invoking Ant. This is due to the task attempting to run
+"mkdir '/root/.jalopy.15'", which, of course, is insane.
+--- old/build.xml	2010-07-10 05:15:08.344566625 +0000
++++ new/build.xml	2010-07-10 05:15:42.653690017 +0000
+@@ -1103,19 +1103,6 @@
+   <property name="dir.src.java" value="${basedir}/src/java" />
+ 
+   <!-- ==================================================================== -->
+-  <!-- Defines the Jalopy task                                              -->
+-  <!-- ==================================================================== -->
+-  <taskdef name="jalopy"
+-           classname="de.hunsicker.jalopy.plugin.ant.AntPlugin">
+-    <classpath>
+-      <fileset dir="${buildlib.dir}/jalopy">
+-        <include name="*.jar" />
+-      </fileset>
+-    </classpath>
+-  </taskdef>
+-
+-
+-  <!-- ==================================================================== -->
+   <!-- Formats all source files                                             -->
+   <!-- ==================================================================== -->
+   <target name="format" description="jalopy formatting">
