@@ -1,9 +1,29 @@
 # Copyright 2010 Cecil Curry <leycec@gmail.com>
 # Distributed under the terms of the GNU General Public License v2
 
+# ....................{ EXLIB                              }....................
 require antefix
 export_exlib_phases src_prepare
 
+# Exheres slot, passed as an exparam so as to be available in global scope.
+myexparam slot=
+  exparam -v SLOT slot
+
+# Download program name and version corresponding to the second most deeply
+# nested subdirectory of the DOWNLOADS URI (e.g., "bg16" for BioJava 1.6.1).
+myexparam download_pnv=
+  exparam -v MY_DOWNLOAD_PNV download_pnv
+
+# Download type corresponding to the most deeply nested subdirectory of the
+# DOWNLOADS URI (e.g., "all" for BioJava 1.6, "src" for BioJava 1.7).
+myexparam download_type=
+  exparam -v MY_DOWNLOAD_TYPE download_type
+
+# Exheres work subdirectory.
+myexparam work="${PNV}-${MY_DOWNLOAD_TYPE}"
+WORK="${WORKBASE}/$(exparam work)"
+
+# ....................{ EXHERES                            }....................
 BUGS_TO="leycec@gmail.com"
 
 SUMMARY="Java framework for processing biological data"
@@ -14,18 +34,14 @@ the manipulation of sequences and 3D structures. The goal of the biojava project
 is to facilitate rapid application development for bioinformatics. 
 "
 
-# Exheres version without version separators.
-MY_PV_COMPACT=$(ever delete_all)
-MY_PNV="${PNV}-src"
-
 HOMEPAGE="http://${PN}.org"
-DOWNLOADS="${HOMEPAGE}/download/bj${MY_PV_COMPACT}/src/${MY_PNV}.jar"
+DOWNLOADS="${HOMEPAGE}/download/${MY_DOWNLOAD_PNV}/${MY_DOWNLOAD_TYPE}/${PNV}-${MY_DOWNLOAD_TYPE}.jar"
 UPSTREAM_DOCUMENTATION="${HOMEPAGE}/docs/api${MY_PV_COMPACT} [[ lang = en ]]"
 
 LICENCES="LGPL-2.1"
 DEPENDENCIES="
     build+run:
-        dev-java/biojava-bytecode:${SLOT}[>=${PV}]
+        dev-java/biojava-bytecode[>=${PV}]
         dev-java/commons-cli:1
         dev-java/commons-dbcp:1
         dev-java/commons-pool:1
@@ -35,14 +51,15 @@ DEPENDENCIES="
         dev-java/junit:4
 "
 
-WORK="${WORKBASE}/${MY_PNV}"
-
-# Build both the core BioJava API and standalone BioJava applications.
-ANT_SRC_CONFIGURE_PARAMS=( prepare-biojava prepare-apps )
-ANT_SRC_COMPILE_PARAMS=( compile-biojava compile-apps )
+#FIXME: Tests need network sandbox whitelisting, but I can't be bothered at the
+#fickle moment.
+# Build the core BioJava API, but not standalone BioJava applications. (Not all
+# BioJava slots have the applications available.)
+ANT_SRC_CONFIGURE_PARAMS=( prepare-biojava )
+ANT_SRC_COMPILE_PARAMS=( compile-biojava )
 ANT_SRC_TEST_PARAMS=( runtests )
-ANT_SRC_INSTALL_PARAMS=( package-biojava package-apps )
-JAVA_SRC_INSTALL_JARS=( "ant-build/"{${PN},apps}.jar )
+ANT_SRC_INSTALL_PARAMS=( package-biojava )
+JAVA_SRC_INSTALL_JARS=( "ant-build/${PN}.jar" )
 
 biojava_src_prepare() {
     antefix_src_prepare

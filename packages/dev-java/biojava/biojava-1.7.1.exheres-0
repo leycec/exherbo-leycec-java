@@ -1,10 +1,12 @@
 # Copyright 2010 Cecil Curry <leycec@gmail.com>
 # Distributed under the terms of the GNU General Public License v2
 
-# Declare the slot prior to including the "biojava" exlib, as that exlib
-# requires it.
-SLOT="1"
-require biojava
+require biojava [ slot=1.7 download_pnv=bj171 download_type=src ]
 
 PLATFORMS="~amd64 ~x86"
+
+ANT_SRC_CONFIGURE_PARAMS+=( prepare-apps )
+ANT_SRC_COMPILE_PARAMS+=( compile-apps )
+ANT_SRC_INSTALL_PARAMS+=( package-apps )
+JAVA_SRC_INSTALL_JARS+=( "ant-build/apps.jar" )
 

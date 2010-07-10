@@ -1,0 +1,8 @@
+# Copyright 2010 Cecil Curry <leycec@gmail.com>
+# Distributed under the terms of the GNU General Public License v2
+
+# BioJava 1.6.x is still required by several other exheres (e.g., Cytoscape).
+require biojava [ slot=1.6 download_pnv=bj16 download_type=all work="" ]
+
+PLATFORMS="~amd64 ~x86"
+
