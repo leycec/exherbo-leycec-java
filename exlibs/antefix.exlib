@@ -181,11 +181,9 @@ antefix_pkg_setup() {
 
 antefix_src_unpack() {
     javafix_src_unpack
+    exparam -b create_build_xml && antefix_create_build_xml
 
-    if exparam -b create_build_xml; then
-        antefix_create_build_xml
-    fi
-
+    #FIXME: Excise.
     # Kill evil bundled jar files!
     #
     # This is a deprecated code block, and now (more or less) considered bad.
@@ -406,7 +404,7 @@ exparam -b create_build_xml && antefix_enable_build_xml_creation
 # void antefix_create_build_xml(char *filename)
 #
 # Create a new "build.xml" file appropriate for building this exheres. See
-# "antefix_create_build_xml_file" for details as to the contents of this file.
+# antefix_create_build_xml_file() for details.
 antefix_create_build_xml() {
     illegal_in_global_scope
     [[ ${#} -eq 0 ]] || die_unless_nonfatal "no arguments needed"
@@ -414,25 +412,28 @@ antefix_create_build_xml() {
     # Localize all operations to the "${WORK}" directory.
     edo pushd "${WORK}"
 
-    # If the source tarball unpacks into the current directory, then all files
-    # and paths are assumed to be Java sources. In this case, move these files
-    # and paths under this destination sources directory.
-    if [[ "${WORK}" == ${WORKBASE} ]]; then
-        local temp_source_dir="${TEMP}/src"
-        edo mkdir -p "${temp_source_dir}"
-        edo mv "${WORK}"/* "${temp_source_dir}"/
-        edo mv "${temp_source_dir}" "${ANT_SRC_COMPILE_SOURCE_DIR}"
-    # Otherwise, if the destination sources directory does not exist, die.
-    elif [[ ! -d "${ANT_SRC_COMPILE_SOURCE_DIR}" ]]; then
-"${ANT_SRC_COMPILE_SOURCE_DIR}"
-        if [[ -n "${ANT_SRC_COMPILE_SOURCE_NAMESPACE_DIR}" ]]; then
-            [[ -d "${ANT_SRC_COMPILE_SOURCE_NAMESPACE_DIR}" ]] || die_unless_nonfatal \
-                "Java sources namespace directory \"${ANT_SRC_COMPILE_SOURCE_NAMESPACE_DIR}\" not found"
-            edo mkdir -p "${ANT_SRC_COMPILE_SOURCE_DIR}"
-            edo mv "${ANT_SRC_COMPILE_SOURCE_NAMESPACE_DIR}" \
-                   "${ANT_SRC_COMPILE_SOURCE_DIR}"/
-        else
-            die_unless_nonfatal "Java sources directory \"${ANT_SRC_COMPILE_SOURCE_DIR}\" not found"
+    # If this exheres is *NOT* handling its own unpacking, then its archives
+    # have already been unpacked we may safely fiddle with unpacked contents.
+    if [[ -n "${JAVA_IS_UNPACKING_ARCHIVES}" ]]; then
+        # If the source tarball unpacks into the current directory, then all
+        # files and paths are assumed to be Java sources. In this case, move
+        # files and paths under this destination sources directory.
+        if [[ "${WORK}" == ${WORKBASE} ]]; then
+            local temp_source_dir="${TEMP}/src"
+            edo mkdir -p "${temp_source_dir}"
+            edo mv "${WORK}"/* "${temp_source_dir}"/
+            edo mv "${temp_source_dir}" "${ANT_SRC_COMPILE_SOURCE_DIR}"
+        # Otherwise, if the destination sources directory does not exist, die.
+        elif [[ ! -d "${ANT_SRC_COMPILE_SOURCE_DIR}" ]]; then
+            if [[ -n "${ANT_SRC_COMPILE_SOURCE_NAMESPACE_DIR}" ]]; then
+                [[ -d "${ANT_SRC_COMPILE_SOURCE_NAMESPACE_DIR}" ]] || die_unless_nonfatal \
+                    "Java sources namespace directory \"${ANT_SRC_COMPILE_SOURCE_NAMESPACE_DIR}\" not found"
+                edo mkdir -p "${ANT_SRC_COMPILE_SOURCE_DIR}"
+                edo mv "${ANT_SRC_COMPILE_SOURCE_NAMESPACE_DIR}" \
+                       "${ANT_SRC_COMPILE_SOURCE_DIR}"/
+            else
+                die_unless_nonfatal "Java sources directory \"${ANT_SRC_COMPILE_SOURCE_DIR}\" not found"
+            fi
         fi
     fi
 

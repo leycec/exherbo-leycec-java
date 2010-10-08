@@ -54,6 +54,11 @@
 # * Provide supplementary exheres for compiling optional Eclipse features: e.g.,
 #   CDT, PyDev. After compilation, exheres should be installed as appropriately
 #   named zip files in Eclipse's "dropins" folder. (Simple? Simple.)
+# * ******IMPORTANT!****** Manually append the following line to
+#   "/etc/eclipse.ini" after installation:
+#       -Dorg.eclipse.swt.browser.XULRunnerPath=/usr/lib64/xulrunner
+#   This corrects linker issues when upgrading "xulrunner" without also
+#   rebuilding Eclipse -- or, at least makes those issues explicit.
 
 # ....................{ EXLIB                              }....................
 # Eclipse exheres must pass the mandatory "build_v" exparam when requiring this
@@ -267,7 +272,7 @@ ECLIPSE_BOOTSTRAP_CLASSPATH="${JAVA_JRE_LIBRARY_DIR}/rt.jar:${JAVA_JRE_LIBRARY_D
 # Absolute root under which Eclipse is installed.
 ECLIPSE_PREFIX="/usr"
 
-# Relative root under ${ECLIPSE_HOME_PREFIX} under which Eclipse is installed.
+# Relative root under ${ECLIPSE_PREFIX} under which Eclipse is installed.
 ECLIPSE_LIBDIR=$(get_libdir)
 
 # Absolute path to which the above "install" task temporarily installs Eclipse.

@@ -85,7 +85,7 @@ CYTOSCAPE_LAUNCH_SCRIPT="${CYTOSCAPE_SCRIPT_DIR}/${PN}.sh" \
 CYTOSCAPE_CONFIG_SCRIPT="${CYTOSCAPE_SCRIPT_DIR}/gen_vmoptions.sh"
 
 # Absolute path to the directory under "${IMAGE}" to which Cytoscape installs.
-CYTOSCAPE_HOME="/usr/share/${PN}"
+CYTOSCAPE_HOME="/usr/$(get_libdir)/${PN}"
 CYTOSCAPE_HOME_IMAGE="${IMAGE}/${CYTOSCAPE_HOME}"
 
 # Absolute path to the directory under "${IMAGE}" to which Cytoscape installs a

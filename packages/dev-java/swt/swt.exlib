@@ -8,8 +8,8 @@
 # distributions, since the Eclipse exheres depends on the SWT exheres. (Ergo,
 # the SWT exheres cannot itself depend on the Eclipse exheres.)
 # 
-# To circumvent this circular dependency, replace SWT's "build.xml" with a new
-# "build.xml" just performing compilation and jaring.
+# To circumvent this circular dependency, we replace SWT's "build.xml" with an
+# ad hoc "build.xml" just performing compilation and jaring.
 require antefix [ create_build_xml=true ]
 export_exlib_phases src_unpack src_compile src_install
 
@@ -51,7 +51,8 @@ SLOT="3.5"
 LICENCES="|| ( CPL-1.0 LGPL-2.1 MPL-1.1 )"
 
 MYOPTIONS="
-    cairo gnome opengl xulrunner
+    cairo gnome opengl
+    xulrunner [[ description = [ Build XULRunner-enabled browsing widget ] ]
     platform:
         amd64
         x86
