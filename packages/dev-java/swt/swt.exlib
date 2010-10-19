@@ -52,7 +52,7 @@ LICENCES="|| ( CPL-1.0 LGPL-2.1 MPL-1.1 )"
 
 MYOPTIONS="
     cairo gnome opengl
-    xulrunner [[ description = [ Build XULRunner-enabled browsing widget ] ]
+    xulrunner  [[ description = [ Build XULRunner-enabled browsing widget ] ]]
     platform:
         amd64
         x86
