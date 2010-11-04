@@ -1,0 +1,52 @@
+# Copyright 2010 Cecil Curry <leycec@gmail.com>
+# Distributed under the terms of the GNU General Public License v2
+
+MY_PNV="${PNV}.sources"
+
+# Do not implicitly remove JARs. Gephi bundles several for which Exherbo
+# has no equivalent exheres.
+require\
+    antefix [ ant_version_required="1.8.1" clean_jar_files=false ]\
+    launchpad [ pv="$(ever delete 2)" suffix=zip ]
+#export_exlib_phases src_unpack src_prepare src_test src_install pkg_postinst
+
+SUMMARY="Interactive graph visualization and exploration platform"
+DESCRIPTION="
+Gephi is an interactive visualization and exploration platform for all kinds of
+networks and complex systems, dynamic and hierarchical graphs."
+
+# This exheres version, with dots replaced by underscores.
+#MY_PV=$(ever replace_all _)
+
+# The minor and minor versions (i.e., first two digits) of the above version.
+#MY_PVMM=$(ever range 1-2 "${MY_PV}")
+
+HOMEPAGE="http://gephi.org"
+UPSTREAM_DOCUMENTATION="${HOMEPAGE}/docs/apimanual [[ lang = en ]]"
+UPSTREAM_RELEASE_NOTES="http://wiki.gephi.org/index.php/Gephi_Releases [[ lang = en ]]"
+
+LICENCES="AGPL-3"
+MYOPTIONS=""
+
+#   build:
+#       dev-java/apache-ant[>=1.8.0]
+DEPENDENCIES="
+    build+test:
+        dev-java/junit:3
+"
+
+BUGS_TO="leycec@gmail.com"
+
+WORK="${WORKBASE}/${MY_PNV}"
+
+#ANT_PARAMS=( -Drelease.dir="${CYTOSCAPE_HOME_IMAGE}" )
+ANT_SRC_CONFIGURE_PARAMS=( clean-toolkit )
+ANT_SRC_COMPILE_PARAMS=( build-toolkit )
+#ANT_SRC_TEST_PARAMS=( test )
+#ANT_SRC_INSTALL_PARAMS=( release )
+
+#DEFAULT_SRC_PREPARE_PATCHES=( "${FILES}/${SLOT}/build.xml.patch" )
+
+#gephi_src_unpack() {
+#    antefix_src_unpack
+#}

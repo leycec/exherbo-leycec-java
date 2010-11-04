@@ -1,13 +1,10 @@
 # Copyright 2010 Cecil Curry <leycec@gmail.com>
 # Distributed under the terms of the GNU General Public License v2
 
-# Do not implicitly remove all JAR files. Cytoscape comes bundled with an
-# astonishing array of JAR file dependencies, several of which Exherbo has no
-# exheres for.
+# Do not implicitly remove JARs. Cytoscape bundles several for which Exherbo
+# has no equivalent exheres.
 require antefix [ clean_jar_files=false ]
 export_exlib_phases src_unpack src_prepare src_test src_install pkg_postinst
-
-BUGS_TO="leycec@gmail.com"
 
 SUMMARY="Visualization platform for real-world networks"
 DESCRIPTION="
@@ -24,8 +21,8 @@ MY_PV=$(ever replace_all _)
 # The minor and minor versions (i.e., first two digits) of the above version.
 MY_PVMM=$(ever range 1-2 "${MY_PV}")
 
+HOMEPAGE="http://www.cytoscape.org"
 DOWNLOADS="http://chianti.ucsd.edu/Cyto-${MY_PV}/cytoscapeSource-v${PV}.tar.gz"
-HOMEPAGE="http://www.${PN}.org"
 UPSTREAM_DOCUMENTATION="${HOMEPAGE}/manual/Cytoscape${MY_PVMM}Manual.html [[ lang = en ]]"
 UPSTREAM_RELEASE_NOTES="${HOMEPAGE}/cyto_${MY_PVMM}_features.php [[ lang = en ]]"
 
@@ -68,6 +65,8 @@ DEPENDENCIES="
         dev-java/junit:3
 "
 #       dev-java/biojava:1.7
+
+BUGS_TO="leycec@gmail.com"
 
 WORK="${WORKBASE}"
 

@@ -13,18 +13,16 @@
 # what a cymatium is. Or a cornice.
 
 # ....................{ EXHERES                            }....................
-# If true, recursively deletes all class files from "${WORK}" immediately after
-# extracting source tarballs. Such class files are often bundled with tarballs
-# to avoid the need for user recompilation. Make them suffer; oh, yes.
+# Ant version required by the calling exheres. Defaults to None, in which case 
+# we add a versionless Ant dependency. (This is usually fine.)
+myexparam ant_version_required=
+
+# If true, recursively delete all JAR and class files respectively from
+# "${WORK}" immediately after extracting source archives. Many Java archives
+# pre-bundle such files to eliminate transitive dependencies. (This is bad.)
 #
 # Defaults to true.
 myexparam -b clean_jar_files=true
-
-# If true, recursively deletes all jar files from "${WORK}" immediately after
-# extracting source tarballs. Such jar files are often bundled with tarballs
-# to reduce dependency hell. For us, bundled jar files only aggravate hell.
-#
-# Defaults to true.
 myexparam -b clean_class_files=true
 
 # All Ant exheres are, by assumption, Java exheres. It is therefore crucial that
@@ -39,11 +37,10 @@ myexparam -b clean_class_files=true
 #     # This overwrites all "javafix" exlib phases with "antefix" exlib phases,
 #     # which is always what you want.
 #     require javafix antefix
-require javafix [ \
-    clean_jar_files=$(  exparam clean_jar_files) \
-    clean_class_files=$(exparam clean_class_files) \
-]
-export_exlib_phases pkg_setup \
+require javafix [\
+    clean_jar_files=$(  exparam clean_jar_files)\
+    clean_class_files=$(exparam clean_class_files) ]
+export_exlib_phases pkg_setup\
     src_unpack src_prepare src_configure src_compile src_test src_install
 
 # If true, programmatically create a new "${WORK}/build.xml" file for this
@@ -163,9 +160,13 @@ fi
 ANT="${ANT_HOME}/bin/ant"
 
 # ....................{ EXHERES                            }....................
+local ant_version_specifier=
+[[ -n "$(exparam ant_version_required)" ]] &&
+    ant_version_specifier="[>=$(exparam ant_version_required)]"
+
 DEPENDENCIES="
     build:
-        dev-java/apache-ant
+        dev-java/apache-ant${ant_version_specifier}
 "
 
 # ....................{ PHASES                             }....................
