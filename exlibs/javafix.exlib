@@ -242,7 +242,7 @@ JAVA_JAR_VERSION_PATTERN='-[[:digit:].]+(rc[[:digit:].]+)?\.jar'
 
 # Bash glob pattern matching the same from within a parameter expansion: e.g.,
 #
-#    Prints "harhar.jar".
+#    # Prints "harhar.jar".
 #    JAR_FILE=harhar-5.62.951.jar && \
 #        echo ${JAR_FILE/${JAVA_JAR_VERSION_PARAMETER_PATTERN}/.jar}
 JAVA_JAR_VERSION_PARAMETER_PATTERN='%-'"${JAVA_VERSION_GLOB}"'\.jar'

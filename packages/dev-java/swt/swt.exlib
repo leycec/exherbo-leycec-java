@@ -89,7 +89,10 @@ DEFAULT_SRC_PREPARE_PATCHES=(
     "${FILES}/build_sh-fix.patch"
 )
 
-# Do not call the "default_src_unpack" function. Eclipse SWT bundles itself in
+# SWT fails to build or run under GCJ, unsurprisingly.
+JAVA_RESTRICT_JDK_PREFIXES=( gcj )
+
+# Do not call the default_src_unpack() function. Eclipse SWT bundles itself in
 # an odd manner; we have to unpack it ourselves.
 JAVA_IS_UNPACKING_ARCHIVES=
 

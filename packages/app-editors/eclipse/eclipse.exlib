@@ -235,6 +235,9 @@ DEPENDENCIES="
 
 WORK="${WORKBASE}/${ECLIPSE_BUILD_NV}"
 
+# Eclipse fails to build or run under GCJ, unsurprisingly.
+JAVA_RESTRICT_JDK_PREFIXES=( gcj )
+
 # The "unpack" task in the top-level "build.xml" file unpacks the
 # "${ECLIPSE_FETCH_ARCHIVE}" archive.
 ANT_SRC_UNPACK_PARAMS=( unpack )

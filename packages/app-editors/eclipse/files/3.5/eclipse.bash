@@ -21,23 +21,22 @@
 # http://wiki.eclipse.org/FAQ_How_do_I_run_Eclipse%3F#eclipse.ini
 
 # ....................{ ENVIRONMENT VARIABLES              }....................
-if [[ ! -f   "__ECLIPSE_CONFIG_FILE__" ]]; then
+[[ -f "__ECLIPSE_CONFIG_FILE__" ]] ||
     echo "\"__ECLIPSE_CONFIG_FILE__\" not found; assuming default configuration." 1>&2 
-fi
 
 if [[ -z "${ECLIPSE_HOME}" ]]; then
 	echo "\$ECLIPSE_HOME not set. Did you delete \"__ECLIPSE_ENVIRO_FILE__\"?" 1>&2
 	exit 1
 fi
 
-ECLIPSE_BIN="${ECLIPSE_HOME}/eclipse"
+local eclipse_bin="${ECLIPSE_HOME}/eclipse"
 
-if [[ ! -x "${ECLIPSE_BIN}" ]]; then
-	echo "\"${ECLIPSE_BIN}\" not found or not executable by this user." 1>&2
+if [[ ! -x "${eclipse_bin}" ]]; then
+	echo "\"${eclipse_bin}\" not found or not executable by this user." 1>&2
 	exit 1
 fi
 
 # ....................{ ECLIPSE!                           }....................
-echo "${ECLIPSE_BIN}" "$@"
-exec "${ECLIPSE_BIN}" "$@"
+echo "eclipse: running \"${ECLIPSE_BIN}\"..."
+exec "${ECLIPSE_BIN}" "${@}"
 
