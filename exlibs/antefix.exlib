@@ -136,6 +136,12 @@ ANT_SRC_TEST_PARAMS=( )
 #     ANT_SRC_INSTALL_PARAMS=( jar )
 ANT_SRC_INSTALL_PARAMS=( )
 
+# If non-empty, adds all Ant JARs (e.g., "ant.jar", "ant-swing.jar") to the
+# classpath. This is occasionally risky and usually unneeded.
+#
+# Defaults to empty.
+ANT_IS_ADDING_ANT_JARS_TO_CLASSPATH=
+
 # ....................{ DEPRECATED SETTINGS                }....................
 # Synonym to the ${ANT_SRC_CONFIGURE_PARAMS} setting. Ant is no longer invoked
 # in the "src_prepare" phase (due to reasons discussed there). This setting is
@@ -148,9 +154,9 @@ ANT_SRC_PREPARE_PARAMS=( )
 # class and jar files. This setting is somewhat more dangerous and deprecated.
 ANT_BUNDLED_LIBSDIR=( )
 
-# ....................{ CONSTANTS                          }....................
+# ....................{ PATHS                              }....................
 if [[ -z "${ANT_HOME}" ]]; then
-    ewarn "\$ANT_HOME is not set; it defaults to \"/usr/share/ant\"."
+    ewarn "\$ANT_HOME is not set; defaulting to \"/usr/share/ant\"."
     ANT_HOME="/usr/share/ant"
 fi
 
@@ -158,6 +164,23 @@ fi
 # by "/etc/env.d/*ant", itself installed by the Ant exheres. It usually points
 # to "/usr/share/ant/".
 ANT="${ANT_HOME}/bin/ant"
+
+# char *which_installed_ant_jar_dir(void)
+#
+# Return the absolute path to the directory having Ant JAR files.
+which_installed_ant_jar_dir() {
+    [[ ${#} -eq 0 ]] || die_unless_nonfatal "no arguments needed"
+    which_installed_jar_dir "ant/lib"
+}
+
+# char *which_installed_ant_jar_file(char *jar_name="ant")
+#
+# Return the absolute path to the passed Ant JAR file, defaulting to the core
+# Ant JAR file "ant.jar" when not passed.
+which_installed_ant_jar_file() {
+    [[ ${#} -le 1 ]] || die_unless_nonfatal "zero or one argument needed"
+    which_installed_jar_file "ant/lib" "${1:-ant}"
+}
 
 # ....................{ EXHERES                            }....................
 local ant_version_specifier=
@@ -174,17 +197,15 @@ antefix_pkg_setup() {
     javafix_pkg_setup
 
     #FIXME: Kill these globals from all Java exheres...then kill this.
-    [[ -n "${ANT_SRC_PREPARE_PARAMS}" ]] &&
-        ewarn "${PN} sets the depcrecated \$ANT_SRC_PREPARE_PARAMS global."
     [[ -n "${ANT_BUNDLED_LIBSDIR}" ]] &&
-        ewarn "${PN} sets the depcrecated \$ANT_BUNDLED_LIBSDIR global."
+        ewarn "${PN} sets the deprecated \$ANT_BUNDLED_LIBSDIR global."
 }
 
 antefix_src_unpack() {
     javafix_src_unpack
     exparam -b create_build_xml && antefix_create_build_xml
 
-    #FIXME: Excise.
+    #FIXME: Kill this.
     # Kill evil bundled jar files!
     #
     # This is a deprecated code block, and now (more or less) considered bad.
@@ -192,9 +213,8 @@ antefix_src_unpack() {
     # "javafix_clean_jar_files" exparam is true.
     if [[ -n "${ANT_BUNDLED_LIBSDIR[@]}" ]]; then
         for ANT_BUNDLED_LIBS in "${ANT_BUNDLED_LIBSDIR[@]}"; do
-            if [[ -d "${WORK}/${ANT_BUNDLED_LIBS}" ]]; then
+            [[ -d "${WORK}/${ANT_BUNDLED_LIBS}" ]] &&
                 edo rm -rf "${WORK}/${ANT_BUNDLED_LIBS}"/*
-            fi
         done
     fi
 
@@ -241,46 +261,41 @@ antefix_src_unpack() {
 antefix_src_prepare() {
     javafix_src_prepare
 
-    if [[ -n "${ANT_SRC_PREPARE_PARAMS[@]}" ]]; then
+    [[ -n "${ANT_SRC_PREPARE_PARAMS[@]}" ]] &&
         exant "${ANT_BUILD_XML}" \
               "${ANT_PARAMS[@]}" "${ANT_SRC_PREPARE_PARAMS[@]}"
-    fi
 }
 
 antefix_src_configure() {
     javafix_src_configure
 
-    if [[ -n "${ANT_SRC_CONFIGURE_PARAMS[@]}" ]]; then
+    [[ -n "${ANT_SRC_CONFIGURE_PARAMS[@]}" ]] &&
         exant "${ANT_BUILD_XML}" \
               "${ANT_PARAMS[@]}" "${ANT_SRC_CONFIGURE_PARAMS[@]}"
-    fi
 }
 
 antefix_src_compile() {
     javafix_src_compile
 
-    if [[ -n "${ANT_SRC_COMPILE_PARAMS[@]}" ]]; then
+    [[ -n "${ANT_SRC_COMPILE_PARAMS[@]}" ]] &&
         exant "${ANT_BUILD_XML}" \
               "${ANT_PARAMS[@]}" "${ANT_SRC_COMPILE_PARAMS[@]}"
-    fi
 }
 
 antefix_src_test() {
     javafix_src_test
 
-    if [[ -n "${ANT_SRC_TEST_PARAMS[@]}" ]]; then
+    [[ -n "${ANT_SRC_TEST_PARAMS[@]}" ]] &&
         exant "${ANT_BUILD_XML}" \
               "${ANT_PARAMS[@]}" "${ANT_SRC_TEST_PARAMS[@]}"
-    fi
 }
 
 antefix_src_install() {
     # Invoke Ant. This generates jar files prior to calling the parent
     # "src_install" function that actually installs these files.
-    if [[ -n "${ANT_SRC_INSTALL_PARAMS[@]}" ]]; then
+    [[ -n "${ANT_SRC_INSTALL_PARAMS[@]}" ]] &&
         exant "${ANT_BUILD_XML}" \
               "${ANT_PARAMS[@]}" "${ANT_SRC_INSTALL_PARAMS[@]}"
-    fi
 
     javafix_src_install
 }
@@ -302,13 +317,27 @@ exant() {
     illegal_in_global_scope
     [[ ${#} -ge 1 ]] || die_unless_nonfatal "at least one argument needed"
 
-    local eant_build_xml="${1}"
+    local exant_build_xml="${1}"
     shift
 
-    # Always enable the "noget" property when invoking Ant. This instructs Ant
-    # to ignore any "get" tasks defined by this "build.xml" file; such tasks,
-    # if defined, attempt to remotely download external jar files.
-    edo "${ANT}" -file "${eant_build_xml}" -Dnoget=true "${@}"
+    # * Enabling "noget" instructs Ant to ignore any "get" tasks in this
+    #   "build.xml" file; such tasks, if defined, remotely download JARs.
+    # * Disabling 'includeantruntime' instructs Ant to not automatically add its
+    #   JAR files to the build classpath. (This also squelches annoying warnings
+    #   first introduced by Ant 1.8.1.)
+    local ant_parameters
+    ant_parameters=(
+        -file "${exant_build_xml}"
+        -Dnoget=true
+        "${@}" )
+
+    # If *NOT* adding Ant JARs to the classpath, append a parameter preventing
+    # Ant from doing so. (Otherwise, Ant does so by default to maintain
+    # backwards compatibility with older "build.xml" files.)
+    [[ -z "${ANT_IS_ADDING_ANT_JARS_TO_CLASSPATH}" ]] &&
+        ant_parameters+=( -Dbuild.sysclasspath=ignore )
+
+    edo "${ANT}" "${ant_parameters[@]}"
 }
 
 # ....................{ BUILD.XML                          }....................

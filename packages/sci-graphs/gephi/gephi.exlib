@@ -28,8 +28,6 @@ UPSTREAM_RELEASE_NOTES="http://wiki.gephi.org/index.php/Gephi_Releases [[ lang =
 LICENCES="AGPL-3"
 MYOPTIONS=""
 
-#   build:
-#       dev-java/apache-ant[>=1.8.0]
 DEPENDENCIES="
     build+test:
         dev-java/junit:3
@@ -40,12 +38,17 @@ BUGS_TO="leycec@gmail.com"
 WORK="${WORKBASE}/${MY_PNV}"
 
 #ANT_PARAMS=( -Drelease.dir="${CYTOSCAPE_HOME_IMAGE}" )
-ANT_SRC_CONFIGURE_PARAMS=( clean-toolkit )
-ANT_SRC_COMPILE_PARAMS=( build-toolkit )
+#ANT_SRC_CONFIGURE_PARAMS=( clean )
+#ANT_SRC_COMPILE_PARAMS=( build )
+#ANT_SRC_COMPILE_PARAMS=( build )
 #ANT_SRC_TEST_PARAMS=( test )
-#ANT_SRC_INSTALL_PARAMS=( release )
+ANT_SRC_INSTALL_PARAMS=( build-zip )
 
 #DEFAULT_SRC_PREPARE_PATCHES=( "${FILES}/${SLOT}/build.xml.patch" )
+
+# Associative array mapping 
+#declare -A DROPS_BASE_URI
+#DROPS_BASE_URI[]="ttp://kenai.com/projects/${JDK}-drops/downloads/download"
 
 #gephi_src_unpack() {
 #    antefix_src_unpack
