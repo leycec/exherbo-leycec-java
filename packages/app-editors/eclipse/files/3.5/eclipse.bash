@@ -29,10 +29,10 @@ if [[ -z "${ECLIPSE_HOME}" ]]; then
 	exit 1
 fi
 
-local eclipse_bin="${ECLIPSE_HOME}/eclipse"
+ECLIPSE_BIN="${ECLIPSE_HOME}/eclipse"
 
-if [[ ! -x "${eclipse_bin}" ]]; then
-	echo "\"${eclipse_bin}\" not found or not executable by this user." 1>&2
+if [[ ! -x "${ECLIPSE_BIN}" ]]; then
+	echo "\"${ECLIPSE_BIN}\" not found or not executable by this user." 1>&2
 	exit 1
 fi
 
