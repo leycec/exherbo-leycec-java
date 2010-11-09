@@ -66,10 +66,6 @@
 #
 # See "Eclipse Build Wiki" above to map Eclipse versions to "build_v" versions.
 
-# Eclipse comes bundled with the kitchen sink. We want that sink.
-require antefix [ clean_jar_files=false ]
-export_exlib_phases src_unpack src_prepare src_install pkg_postinst
-
 # Exheres slot, passed as an exparam so as to be available in global scope.
 myexparam slot=
   exparam -v SLOT slot
@@ -108,7 +104,7 @@ myexparam build_archive="${ECLIPSE_BUILD_NV}.tar.bz2"
   exparam -v ECLIPSE_BUILD_ARCHIVE build_archive
 
 # Eclipse requires optional Ant tasks, which Exherbo currently does not provide.
-# Instead, fetch a precompiled jar file for each task identified as:
+# Instead, fetch a precompiled JAR file for each task identified as:
 #
 # * "ant_n", the ant tarball's name.
 # * "ant_v", the ant tarball's version needed for this Eclipse version.
@@ -122,6 +118,10 @@ myexparam ant_nv="${ECLIPSE_ANT_N}-${ECLIPSE_ANT_V}"
   exparam -v ECLIPSE_ANT_NV ant_nv
 myexparam ant_archive="${ECLIPSE_ANT_NV}-bin.tar.bz2"
   exparam -v ECLIPSE_ANT_ARCHIVE ant_archive
+
+# Eclipse comes bundled with the kitchen sink. We want that sink.
+require antefix [ ant_version_required="${ant_v}" clean_jar_files=false ]
+export_exlib_phases src_unpack src_prepare src_install pkg_postinst
 
 # ....................{ MAGIC STRINGS                      }....................
 # Eclipse analogue to $(uname --operating-system).
@@ -197,7 +197,7 @@ MYOPTIONS="
 # * "httpcomponents-client:3", most versions.
 # * "lucene:1", most versions.
 # * "icu4j:4[=4.0.1]", exactly this version. Newer versions of ICU4J bundle
-#   localization resources in different directories within the ICU4J jar file,
+#   localization resources in different directories within the ICU4J JAR file,
 #   causing Eclipse to die during compilation.
 # * "swt", exactly the same slot and version as this exheres.
 # 
@@ -247,7 +247,7 @@ ANT_SRC_UNPACK_PARAMS=( unpack )
 ANT_SRC_PREPARE_PARAMS=( applyPatches )
 
 # The "symlinkDeps" task in the top-level "build.xml" file symlinks exheres-
-# installed external jar files into the "plugins/" directory. Due to the
+# installed external JAR files into the "plugins/" directory. Due to the
 # difficulty of doing this by hand, this is probably the most helpful Ant task
 # anyone ever wrote. (Thanks, guys!)
 ANT_SRC_CONFIGURE_PARAMS=( symlinkDeps )
@@ -259,6 +259,9 @@ ANT_SRC_COMPILE_PARAMS=( build )
 # distribution under "${WORK}/installation".
 ANT_SRC_INSTALL_PARAMS=( install )
 
+# Eclipse requires Ant JARs to be added to the classpath.
+ANT_IS_ADDING_ANT_JARS_TO_CLASSPATH=1
+
 # Absolute path to the directory into which the "install" task assembles the
 # final Eclipse distribution.
 ECLIPSE_BUILD_DIR="${WORK}/build/${ECLIPSE_FETCH_NV}"
@@ -266,7 +269,7 @@ ECLIPSE_BUILD_DIR="${WORK}/build/${ECLIPSE_FETCH_NV}"
 # Absolute path to the directory into which the Ant tarball is unpacked.
 ECLIPSE_ANT_WORK="${WORKBASE}/${ECLIPSE_ANT_NV}"
 
-# Java classpath to core JDK jar files.
+# Java classpath to core JDK JAR files.
 ECLIPSE_BOOTSTRAP_CLASSPATH="${JAVA_JRE_LIBRARY_DIR}/rt.jar:${JAVA_JRE_LIBRARY_DIR}/jce.jar"
 
 # Absolute root under which Eclipse is installed.
@@ -303,9 +306,9 @@ ECLIPSE_ENVIRO_FILENAME="60${PN}"
 ECLIPSE_ENVIRO_FILE="/etc/env.d/${ECLIPSE_ENVIRO_FILENAME}"
 ECLIPSE_CONFIG_FILE="/etc/${PN}.ini"
 
-# Array of all optional Ant task names to be installed as precompiled jar files.
+# Array of all optional Ant task names to be installed as precompiled JAR files.
 # (This should eventually be reduced to none.)
-eclipse_ant_binary_taskS=(
+ECLIPSE_ANT_BINARY_TASKS=(
     ant-antlr
     ant-apache-bcel ant-apache-bsf ant-apache-log4j ant-apache-oro
     ant-apache-regexp ant-apache-resolver
@@ -323,7 +326,7 @@ eclipse_src_unpack() {
     # extracts the latter itself, during the "unpack" Ant task. 
     unpack "${ECLIPSE_BUILD_ARCHIVE}"
 
-    # Extract all precompiled Ant task jar files from its binary tarball into
+    # Extract all precompiled Ant task JAR files from its binary tarball into
     # ${TEMP}, so as to avoid overwriting files extracted above.
     echo ">>> Unpacking ${ECLIPSE_BUILD_ARCHIVE} to ${PWD}"
     edo tar xvjf "${FETCHEDDIR}/${ECLIPSE_ANT_ARCHIVE}" \
@@ -332,6 +335,9 @@ eclipse_src_unpack() {
     if   option platform:amd64; then ECLIPSE_BUILD_ARCH="x86_64"
     elif option platform:x86;   then ECLIPSE_BUILD_ARCH="x86"
     fi
+
+    # Append core Ant JAR files to the Java classpath.
+#   ECLIPSE_BOOTSTRAP_CLASSPATH="${ECLIPSE_BOOTSTRAP_CLASSPATH}:$(which_installed_ant_jar_file)"
 
     # Notify Ant of our target architecture and bootstrap classpath.
     ANT_PARAMS+=(
@@ -384,9 +390,7 @@ eclipse_src_prepare() {
     # to prevent us from having to rewrite all patch files for minor version
     # bumps. Without this, we would have to hardcode paths starting with
     # "build/eclipse-3.5.2-src/" in each patch header. With this, we don't.
-    edo pushd "${ECLIPSE_BUILD_DIR}"
     eclipse_patch "gtk-make_linux_mak.patch"
-    edo popd
 
     # Convert hardcoded library paths to Exherbo-specific library paths. This is
     # only a precautionary measure in the event of Eclipse refusing to recognize
@@ -398,8 +402,8 @@ eclipse_src_prepare() {
         "${ECLIPSE_BUILD_DIR}/plugins/org.eclipse.pde.build/feature/builder/build.properties" \
         "${ECLIPSE_BUILD_DIR}/plugins/org.eclipse.pde.build/templates/headless-build/build.properties" \
         ; do
-        edo sed -i "${eclipse_build_properties}" -r \
-            -e "s~=.+/rt\.jar.*$~=${ECLIPSE_BOOTSTRAP_CLASSPATH}~"
+        edo sed -r -e "s~=.+/rt\.jar.*$~=${ECLIPSE_BOOTSTRAP_CLASSPATH}~" \
+            -i "${eclipse_build_properties}"
     done
 
     # Remove cross-architecture plugins.
@@ -472,29 +476,34 @@ eclipse_src_prepare() {
     eclipse_symlink_nonosgi_dependency "org.junit"  "junit:3"
     eclipse_symlink_nonosgi_dependency "org.junit4" "junit:4"
 
-    # Create non-OSGi Ant dependency properties (i.e., jar files provided by the
-    # "apache-ant" exheres).
+    # Create non-OSGi Ant dependency properties (i.e., Ant-provided JAR files).
     local eclipse_ant_task
     for   eclipse_ant_task in \
-        ant ant-jmf ant-junit ant-launcher ant-nodeps ant-swing ant-trax ; do
+        ant ant-jmf ant-junit ant-launcher ant-nodeps ant-swing ; do
         # This three parameter version of "eclipse_symlink_nonosgi_dependency"
         # gets these parameters:
         #
-        # {1} "dependencies.properties" jar package.
-        # {2} "dependencies.properties" jar pattern.
-        # {3} Exherbo-specific jar specifier. The
-        #     "which_installed_jar_file_from_spec" function expands this
-        #     parameter into an absolute path: e.g.,
-        #     "/usr/share/ant/lib/ant-trax.jar".
+        # {1} "dependencies.properties" JAR package.
+        # {2} "dependencies.properties" JAR pattern.
+        # {3} Exherbo JAR specifier. The which_installed_jar_file_from_spec()
+        #     function expands this into an absolute path: e.g.,
+        #     "/usr/share/ant/lib/ant-swing.jar".
         eclipse_symlink_nonosgi_dependency "org.apache.ant" \
                "/lib/${eclipse_ant_task}\\.jar" \
             "ant lib/${eclipse_ant_task}"
     done
 
-    # Non-OSGI jar files, Ant-specific but not provided by the "apache-ant"
+    # Hack! Eclipse expects "ant-trax.jar"; however, Ant 1.8.1 migrated this
+    # JAR's content into the "ant.jar" JAR. Thus, symlink the latter to the
+    # former.
+    eclipse_symlink_nonosgi_dependency "org.apache.ant" \
+           "/lib/ant-trax\\.jar" \
+        "ant lib/ant"
+
+    # Non-OSGI JAR files, Ant-specific but not provided by the "apache-ant"
     # exheres. Naturally, this should be fixed.
     local eclipse_ant_binary_task
-    for   eclipse_ant_binary_task in "${eclipse_ant_binary_taskS[@]}"; do
+    for   eclipse_ant_binary_task in "${ECLIPSE_ANT_BINARY_TASKS[@]}"; do
         eclipse_copy_nonosgi_dependency "org.apache.ant" \
             "/lib/${eclipse_ant_binary_task}\\.jar" \
             "${ECLIPSE_ANT_WORK}/lib/${eclipse_ant_binary_task}.jar"
@@ -539,9 +548,10 @@ eclipse_src_install() {
     # have to replace the symlink anyway. It's more trouble than it's worth!)
     edo rm "${IMAGE}${ECLIPSE_PREFIX}/bin/eclipse"
     edo cp "${FILES}/${SLOT}/${PN}.bash" "${TEMP}"/
-    edo sed -i "${TEMP}/${PN}.bash" \
+    edo sed \
         -e "s~__ECLIPSE_CONFIG_FILE__~${ECLIPSE_CONFIG_FILE}~" \
-        -e "s~__ECLIPSE_ENVIRO_FILE__~${ECLIPSE_ENVIRO_FILE}~"
+        -e "s~__ECLIPSE_ENVIRO_FILE__~${ECLIPSE_ENVIRO_FILE}~" \
+        -i "${TEMP}/${PN}.bash"
     newbin "${TEMP}/${PN}.bash" "${ECLIPSE_LAUNCH_FILENAME}"
 
     # Install the launcher configuration files.
@@ -553,41 +563,39 @@ EOF
 eclipse_pkg_postinst() {
     default
 
-    elog "Eclipse has been installed to \"${ECLIPSE_HOME}\"."
+    elog "Eclipse is configurable via \"${ECLIPSE_CONFIG_FILE}\". Edit this file if you"
+    elog "recieve OutOfMemory exceptions."
     elog
-    elog "Eclipse is runnable via \"${ECLIPSE_LAUNCH_FILENAME}\" and configurable via"
-    elog "\"${ECLIPSE_CONFIG_FILE}\". Edit the latter if you recieve OutOfMemory"
-    elog "exceptions."
-    elog
-    elog "Note Eclipse does not add any update discovery sites by default! On initial"
-    elog "startup, add the following sites to the \"Help->Install New Software...->"
-    elog "Available Software Sites\" dialog:"
+    elog "Eclipse does not add any update discovery sites by default. Add the following"
+    elog "default sites via \"Help->Install New Software...->Available Software Sites\":"
     elog
     elog "    Name: Eclipse Updates"
     elog "    URL:  http://download.eclipse.org/eclipse/updates/3.5"
     elog "    Name: Eclipse Galileo Updates"
     elog "    URL:  http://download.eclipse.org/releases/galileo"
-    elog
-    elog "These updates are fetched as precompiled binaries. (Such is life.)"
 }
 
-# ....................{ PATCHES                            }....................
+# ....................{ PATCH                              }....................
 # void eclipse_patch(char *file1, char *file2, ...)
 #
-# Mimic the "expatch" function by patching the passed relative filenames under
-# ${ECLIPSE_FILES_DIR}. The "expatch" function refuses to run from any phase
-# except "src_prepare", which is fairly silly. Call "patch" instead, and shrug.
+# Mimic the expatch() function by patching the passed relative filenames under
+# ${ECLIPSE_FILES_DIR}. The expatch() function refuses to run from any phase
+# except "src_prepare", which is fairly silly. Call patch() instead... shrug.
 eclipse_patch() {
     illegal_in_global_scope
     [[ ${#} -ge 1 ]] || die_unless_nonfatal "at one argument needed"
 
-    local PATCH_FILENAME PATCH_FILE
-    for   PATCH_FILENAME in "${@}"; do
-          PATCH_FILE="${FILES}/${SLOT}/${PATCH_FILENAME}"
-          echo "cat -- '${PATCH_FILE}' | patch -s -f -p1"
-                cat -- "${PATCH_FILE}" | patch -s -f -p1
-          paludis_assert_unless_nonfatal "applying \"${PATCH_FILE}\" failed"
+    edo pushd "${ECLIPSE_BUILD_DIR}"
+
+    local patch_filename patch_file
+    for   patch_filename in "${@}"; do
+          patch_file="${FILES}/${SLOT}/${patch_filename}"
+          echo "cat -- '${patch_file}' | patch -s -f -p1"
+                cat -- "${patch_file}" | patch -s -f -p1
+          paludis_assert_unless_nonfatal "applying \"${patch_file}\" failed"
     done
+
+    edo popd
 }
 
 # ....................{ XMLSTARLET                         }....................
@@ -604,12 +612,12 @@ eclipse_xmlstarlet_ed() {
     illegal_in_global_scope
     [[ ${#} -ge 2 ]] || die_unless_nonfatal "at least two arguments needed"
 
-    local XMLSTARLETED_TEMP_FILE="${TEMP}/eclipse_xmlstarlet_ed.xml"
-    local XMLSTARLETED_FILE="${1}"
+    local xmlstarlet_temp_file="${TEMP}/eclipse_xmlstarlet_ed.xml"
+    local xmlstarlet_file="${1}"
     shift
 
-    edo xmlstarlet ed "${@}" "${XMLSTARLETED_FILE}" > "${XMLSTARLETED_TEMP_FILE}"
-    edo mv "${XMLSTARLETED_TEMP_FILE}" "${XMLSTARLETED_FILE}"
+    edo xmlstarlet ed "${@}" "${xmlstarlet_file}" > "${xmlstarlet_temp_file}"
+    edo mv "${xmlstarlet_temp_file}" "${xmlstarlet_file}"
 }
 
 # ....................{ PLUGINS                            }....................
@@ -617,14 +625,14 @@ eclipse_grep_names_not_matching() {
     illegal_in_global_scope
     [[ ${#} -eq 2 ]] || die_unless_nonfatal "exactly two arguments needed"
 
-    local NAME_PATTERN="${1}"
-    local ALL_NAMES="${2}"
+    local name_pattern="${1}"
+    local all_names="${2}"
 
     # Cut the passed name pattern from the passed whitespace-delimited string of
     # all such strings. Note this uses sed rather than Bash regular expressions:
     # not because it has to, but because it was easier and more reliable to.
-    echo "${ALL_NAMES}" | sed -r \
-        -e "s~[[:space:]]?${NAME_PATTERN}([[:space:]]?)~\\1~" \
+    echo "${all_names}" | sed -r \
+        -e "s~[[:space:]]?${name_pattern}([[:space:]]?)~\\1~" \
         -e 's~^[[:space:]]+~~'
 }
 
@@ -670,18 +678,19 @@ eclipse_symlink_dependency() {
     [[ ${#} -eq 3 ]] ||
     [[ ${#} -eq 4 ]] || die_unless_nonfatal "three or four arguments needed"
 
-    local DEPENDENCIES_PROPERTIES_FILE="${1}"
-    local ECLIPSE_JAR_PACKAGE="${2}"
-    local ECLIPSE_JAR_FILENAME
+    local dependencies_properties_file="${1}"
+    local eclipse_jar_package="${2}"
+    local eclipse_jar_filename
 
     if [[ ${#} -eq 3 ]]
-    then ECLIPSE_JAR_FILENAME='\.jar'
-    else ECLIPSE_JAR_FILENAME="${3}"; shift
+    then eclipse_jar_filename='\.jar'
+    else eclipse_jar_filename="${3}"; shift
     fi
 
-    local EXHERBO_JAR_FILE=$(which_installed_jar_file_from_spec "${3}")
-    edo sed -i "${DEPENDENCIES_PROPERTIES_FILE}" -r \
-        -e "s~^(${ECLIPSE_JAR_PACKAGE}.+${ECLIPSE_JAR_FILENAME}=).+$~\\1${EXHERBO_JAR_FILE}~"
+    local exherbo_jar_file=$(which_installed_jar_file_from_spec "${3}")
+    edo sed -r -e \
+        "s~^(${eclipse_jar_package}.+${eclipse_jar_filename}=).+$~\\1${exherbo_jar_file}~" \
+        -i "${dependencies_properties_file}"
 }
 
 eclipse_symlink_new_osgi_dependency() {
@@ -695,11 +704,11 @@ eclipse_symlink_new_dependency() {
     illegal_in_global_scope
     [[ ${#} -eq 3 ]] || die_unless_nonfatal "exactly three arguments needed"
 
-    local DEPENDENCIES_PROPERTIES_FILE="${1}"
-    local ECLIPSE_JAR_FILENAME="${2}"
-    local EXHERBO_JAR_FILE=$(which_installed_jar_file_from_spec "${3}")
-    edo cat <<EOF >> "${DEPENDENCIES_PROPERTIES_FILE}"
-${ECLIPSE_JAR_FILENAME}=${EXHERBO_JAR_FILE}
+    local dependencies_properties_file="${1}"
+    local eclipse_jar_filename="${2}"
+    local exherbo_jar_file=$(which_installed_jar_file_from_spec "${3}")
+    edo cat <<EOF >> "${dependencies_properties_file}"
+${eclipse_jar_filename}=${exherbo_jar_file}
 EOF
 }
 
@@ -715,42 +724,42 @@ eclipse_copy_dependency() {
     [[ ${#} -eq 3 ]] ||
     [[ ${#} -eq 4 ]] || die_unless_nonfatal "three or four arguments needed"
 
-    local DEPENDENCIES_PROPERTIES_FILE="${1}"
-    local ECLIPSE_JAR_PACKAGE="${2}"
-    local ECLIPSE_JAR_FILENAME
+    local dependencies_properties_file="${1}"
+    local eclipse_jar_package="${2}"
+    local eclipse_jar_filename=
 
     if [[ ${#} -eq 3 ]]
-    then ECLIPSE_JAR_FILENAME='\.jar'
-    else ECLIPSE_JAR_FILENAME="${3}"; shift
+    then eclipse_jar_filename='\.jar'
+    else eclipse_jar_filename="${3}"; shift
     fi
 
-    local EXHERBO_JAR_FILE="${3}"
+    local exherbo_jar_file="${3}"
 
-    # Make a PCRE matching the passed Java package name. This requires grep be
-    # called with the "-E" option and sed with the "-r" option.
-    local ECLIPSE_JAR_PACKAGE_PATTERN="^${ECLIPSE_JAR_PACKAGE}_.+${ECLIPSE_JAR_FILENAME}="
+    # Regular expression matching the passed Java package name. This requires
+    # "grep" be run with "-E" and sed with "-r".
+    local eclipse_jar_package_pattern="^${eclipse_jar_package}_.+${eclipse_jar_filename}="
 
-    # Grep the filename Eclipse expects to find this jar file under from the
+    # Grep the filename Eclipse expects to find this JAR file under from the
     # passed dependency properties file. (Since this grep expression unavoidably
     # greps a trailing '=' character, explicitly chomp it with a sed pipe.)
-    local ECLIPSE_JAR_FILENAME=$(grep -m 1 -Eo -e "${ECLIPSE_JAR_PACKAGE_PATTERN}" "${DEPENDENCIES_PROPERTIES_FILE}" | sed 's~=$~~')
-    local ECLIPSE_JAR_FILE="${ECLIPSE_BUILD_DIR}/plugins/${ECLIPSE_JAR_FILENAME}"
-    local ECLIPSE_JAR_DIR="${ECLIPSE_JAR_FILE%/*}"
+    local eclipse_jar_filename=$(grep -m 1 -Eo -e "${eclipse_jar_package_pattern}" "${dependencies_properties_file}" | sed 's~=$~~')
+    local eclipse_jar_file="${ECLIPSE_BUILD_DIR}/plugins/${eclipse_jar_filename}"
+    local eclipse_jar_dir="${eclipse_jar_file%/*}"
 
     # Now remove this filename from the same file, since entries in this file
     # are filenames to be symlinked. This function does not symlink this file;
     # instead, it moves it as is to the Eclipse "plugins/" directory.
     #
     # Note we use a little known sed feature, here. The
-    # ${ECLIPSE_JAR_PACKAGE_PATTERN} may contain slashes; however, this
+    # ${eclipse_jar_package_pattern} may contain slashes; however, this
     # conflicts with seds default use of slashes as range match delimiters. To
     # circumvent this, assign its range match delimiter to an infrequently used
     # character: here, '~'. To do so, that character must be prefixed with '\'.
-    edo sed -r -e "\\~${ECLIPSE_JAR_PACKAGE_PATTERN}~d" \
-        -i "${DEPENDENCIES_PROPERTIES_FILE}"
+    edo sed -r -e "\\~${eclipse_jar_package_pattern}~d" \
+        -i "${dependencies_properties_file}"
 
-    # Move the downloaded jar file to this filename in this directory.
-    [[  -d "${ECLIPSE_JAR_DIR}" ]] || edo mkdir -p "${ECLIPSE_JAR_DIR}"
-    edo mv "${EXHERBO_JAR_FILE}" "${ECLIPSE_JAR_FILE}"
+    # Move the downloaded JAR file to this filename in this directory.
+    edo mkdir -p "${eclipse_jar_dir}"
+    edo mv "${exherbo_jar_file}" "${eclipse_jar_file}"
 }
 
