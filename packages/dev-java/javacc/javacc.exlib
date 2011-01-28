@@ -81,12 +81,12 @@ javacc_src_install() {
     local javacc_bin_dir=$( which_installed_jar_dir_for_this_exheres)/"bin"
 
     # JavaCC provides several convenience shell scripts for running various
-    # Java class files in its installed jar file as command-line executables.
-    # Change the path to that jar file in these scripts to the Exherbo-specific
-    # absolute path...to that jar file!
+    # Java class files in its installed JAR file as command-line executables.
+    # Change the path to that JAR file in these scripts to the Exherbo-specific
+    # absolute path...to that JAR file!
     #
-    # Don't do this in "javacc_src_prepare" as "javacc.jar" will not have been
-    # installed at that point.
+    # Don't do this in javacc_src_prepare() as "javacc.jar" is not installed at
+    # that point and thus the above function would die.
     local javacc_shell_script
     for   javacc_shell_script in \
         "bin/javacc" "bin/jjdoc" "bin/jjrun" "bin/jjtree"; do
@@ -116,7 +116,7 @@ javacc_src_install() {
     dodir                      "${javacc_bin_dir}/lib/"
     dosym "${javacc_jar_file}" "${javacc_bin_dir}/lib/"
     local javacc_shell_script
-    for   javacc_shell_script in "javacc" "jjdoc" "jjrun" "jjtree"; do
+    for   javacc_shell_script in javacc jjdoc jjrun jjtree; do
         dosym "/usr/bin/${javacc_shell_script}" "${javacc_bin_dir}/"
     done
 }

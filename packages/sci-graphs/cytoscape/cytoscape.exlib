@@ -272,13 +272,13 @@ cytoscape_src_prepare() {
 
 cytoscape_src_test() {
     #FIXME: This *should* work. Of course, it doesn't. Bruteforce it.
-#   sydboxcmd 'net/whitelist/connect/unix:///tmp/.X11-unix/X0'
-#   sydboxcmd "net/whitelist/bind/inet6://::1@0"
+#   esandbox 'net/whitelist/connect/unix:///tmp/.X11-unix/X0'
+#   esandbox "net/whitelist/bind/inet6://::1@0"
     ewarn "Disabling network sandboxing..."
-    sydboxcmd 'sandunbox/net'
+    esandbox 'sandunbox/net'
     antefix_src_test
     ewarn "Reenabling network sandboxing..."
-    sydboxcmd 'sandbox/net'
+    esandbox 'sandbox/net'
 }
 
 cytoscape_src_install() {

@@ -283,7 +283,7 @@ ECLIPSE_LIBDIR=$(get_libdir)
 
 # Absolute path to which the above "install" task temporarily installs Eclipse.
 # This exheres does not actually install Eclipse to this directory, as this
-# directory is not slotted.
+# directory is unslotted.
 ECLIPSE_HOME_IMAGE="${IMAGE}${ECLIPSE_PREFIX}/${ECLIPSE_LIBDIR}/${PN}"
 
 # Absolute path to which this exheres permanently installs Eclipse.
@@ -305,9 +305,7 @@ ECLIPSE_FEATURE_XML_FILES=( )
 # Absolute path to installed text files.
 ECLIPSE_LAUNCH_FILENAME="${PN}-${SLOT}"
 ECLIPSE_LAUNCH_FILE="/usr/bin/${PN}-${SLOT}"
-ECLIPSE_ENVIRO_FILENAME="60${PN}"
-ECLIPSE_ENVIRO_FILE="/etc/env.d/${ECLIPSE_ENVIRO_FILENAME}"
-ECLIPSE_CONFIG_FILE="/etc/${PN}.ini"
+ECLIPSE_CONFIG_FILE="/etc/eclipse/${SLOT}/${PN}.ini"
 
 # Array of all optional Ant task names to be installed as precompiled JAR files.
 # (This should eventually be reduced to none.)
@@ -527,55 +525,42 @@ eclipse_src_install() {
     #
     # For further examples of sydbox syntax, see:
     # http://projects.0x90.dk/repositories/entry/sydbox/tests/progtests/t47-sandbox-network-ipv6.bash?rev=b2ae2ee332bc8a7927640a313d01b4e87580f550
-#   sydboxcmd "net/whitelist/connect/inet6://::1"
+#   esandbox "net/whitelist/connect/inet6://::1"
     ewarn "Disabling network sandboxing..."
-    sydboxcmd 'sandunbox/net'
+    esandbox 'sandunbox/net'
     antefix_src_install
     ewarn "Reenabling network sandboxing..."
-    sydboxcmd 'sandbox/net'
+    esandbox 'sandbox/net'
 
     #FIXME leycec: replace "plugins/org.eclipse.swt.gtk.linux.x86_64_3.5.2.v3557f.jar"
     #with a system symlink.
-    # Install Eclipse to a slotted directory of the proper multilib tree. Note
-    # Eclipse installs a "${ECLIPSE_HOME_IMAGE_PREFIX}/share" directory as well,
-    # but that it provides so few files as to hardly benefit from slotting.
+    # Slot Eclipse. Note Eclipse installs a "${ECLIPSE_HOME_IMAGE_PREFIX}/share"
+    # directory providing so few files as to hardly benefit from slotting.
     edo mv  "${ECLIPSE_HOME_IMAGE}" "${IMAGE}${ECLIPSE_HOME}"
     keepdir "${ECLIPSE_HOME}/dropins"
     keepdir "${ECLIPSE_PREFIX}/share/${PN}/dropins"
 
-    # Install the launcher script as "/usr/bin/eclipse-${SLOT}". Note Eclipse
-    # installs a "/usr/bin/eclipse" symlink to "/usr/lib/eclipse/bin/eclipse,"
-    # the binary Eclipse executable. Remove this, as running the raw executable
-    # is a bit unhelpful. (And besides, the absolute path of the raw executable
-    # is changed to "/usr/$(get_libdir)/eclipse/bin/eclipse", meaning we would
-    # have to replace the symlink anyway. It's more trouble than it's worth!)
-    edo rm "${IMAGE}${ECLIPSE_PREFIX}/bin/eclipse"
-    edo cp "${FILES}/${SLOT}/${PN}.bash" "${TEMP}"/
-    edo sed \
-        -e "s~__ECLIPSE_CONFIG_FILE__~${ECLIPSE_CONFIG_FILE}~" \
-        -e "s~__ECLIPSE_ENVIRO_FILE__~${ECLIPSE_ENVIRO_FILE}~" \
-        -i "${TEMP}/${PN}.bash"
-    newbin "${TEMP}/${PN}.bash" "${ECLIPSE_LAUNCH_FILENAME}"
+    # Slot the Eclipse launcher to "/usr/bin/eclipse-${SLOT}".
+    edo mv "${IMAGE}${ECLIPSE_PREFIX}/bin/eclipse" \
+           "${IMAGE}${ECLIPSE_PREFIX}/bin/eclipse-${SLOT}"
 
-    # Install the launcher configuration files.
-    hereenvd "${ECLIPSE_ENVIRO_FILENAME}" <<EOF
-ECLIPSE_HOME="${ECLIPSE_HOME}"
-EOF
+    # Slot the Eclipse configuration file to "/etc/eclipse/${SLOT}/eclipse.ini".
+    edo mkdir -p $(dirname "${IMAGE}${ECLIPSE_CONFIG_FILE}")
+    dosym "${ECLIPSE_HOME}/${PN}.ini" "${ECLIPSE_CONFIG_FILE}"
 }
 
 eclipse_pkg_postinst() {
     default
 
-    elog "Eclipse is configurable via \"${ECLIPSE_CONFIG_FILE}\". Edit this file if you"
-    elog "recieve OutOfMemory exceptions."
+    elog "Eclipse startup configurable at \"${ECLIPSE_CONFIG_FILE}\"."
     elog
     elog "Eclipse does not add any update discovery sites by default. Add the following"
     elog "default sites via \"Help->Install New Software...->Available Software Sites\":"
     elog
-    elog "    Name: Eclipse Updates"
-    elog "    URL:  http://download.eclipse.org/eclipse/updates/3.5"
-    elog "    Name: Eclipse Galileo Updates"
-    elog "    URL:  http://download.eclipse.org/releases/galileo"
+    elog "\tName: Eclipse Updates"
+    elog "\tURL:  http://download.eclipse.org/eclipse/updates/3.5"
+    elog "\tName: Eclipse Galileo Updates"
+    elog "\tURL:  http://download.eclipse.org/releases/galileo"
 }
 
 # ....................{ PATCH                              }....................

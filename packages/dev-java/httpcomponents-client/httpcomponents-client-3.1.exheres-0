@@ -44,7 +44,7 @@ src_prepare() {
 
 src_test() {
     ewarn "Disabling network sandboxing"
-    sydboxcmd 'sandunbox/net'
+    esandbox 'sandunbox/net'
 
     antefix_src_test
 }

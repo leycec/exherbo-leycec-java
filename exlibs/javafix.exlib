@@ -336,7 +336,7 @@ javafix_src_install() {
 javafix_src_preamble() {
     if [[ -n "${JAVA_IS_DISABLING_NETWORK_SANDBOXING}" ]]; then
         ewarn "Disabling network sandboxing..."
-        sydboxcmd 'sandunbox/net'
+        esandbox 'sandunbox/net'
     fi
 }
 
