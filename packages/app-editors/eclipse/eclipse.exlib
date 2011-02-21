@@ -163,12 +163,21 @@ to as Eclipse ADT for Ada, Eclipse CDT for C, Eclipse JDT for Java, and
 Eclipse PDT for PHP.
 "
 
-#FIXME leycec: Define additional mirrors.
+#FIXME: Make this suitably generic for non-Galileo releases.
+DOWNLOAD_HOME="http://download.${PN}.org/technology/linuxtools/${ECLIPSE_BUILD_N}/${SLOT}.x_Galileo"
+
+#FIXME leycec: Define additional mirrors: e.g.,
+#http://mirror.aarnet.edu.au/pub/eclipse/technology/linuxtools/eclipse-build/3.5.x_Galileo/eclipse-3.5.2-src.tar.bz2
 DOWNLOADS="
-http://download.${PN}.org/technology/linuxtools/${ECLIPSE_BUILD_N}/${ECLIPSE_FETCH_ARCHIVE}
-http://download.${PN}.org/technology/linuxtools/${ECLIPSE_BUILD_N}/${ECLIPSE_BUILD_ARCHIVE}
+${DOWNLOAD_HOME}/${ECLIPSE_FETCH_ARCHIVE}
+${DOWNLOAD_HOME}/${ECLIPSE_BUILD_ARCHIVE}
 http://archive.apache.org/dist/ant/binaries/apache-ant-${ECLIPSE_ANT_V}-bin.tar.bz2
 "
+#DOWNLOADS="
+#http://download.${PN}.org/technology/linuxtools/${ECLIPSE_BUILD_N}/${ECLIPSE_FETCH_ARCHIVE}
+#http://download.${PN}.org/technology/linuxtools/${ECLIPSE_BUILD_N}/${ECLIPSE_BUILD_ARCHIVE}
+#http://archive.apache.org/dist/ant/binaries/apache-ant-${ECLIPSE_ANT_V}-bin.tar.bz2
+#"
 HOMEPAGE="http://www.${PN}.org"
 UPSTREAM_DOCUMENTATION="http://help.${PN}.org/galileo/index.jsp [[ lang = en ]]"
 UPSTREAM_RELEASE_NOTES="http://www.${PN}.org/${PN}/development/readme_${PN}_${ECLIPSE_FETCH_V}.html"
@@ -552,7 +561,7 @@ eclipse_src_install() {
 eclipse_pkg_postinst() {
     default
 
-    elog "Eclipse startup configurable at \"${ECLIPSE_CONFIG_FILE}\"."
+    elog "Eclipse start-up is configurable at \"${ECLIPSE_CONFIG_FILE}\"."
     elog
     elog "Eclipse does not add any update discovery sites by default. Add the following"
     elog "default sites via \"Help->Install New Software...->Available Software Sites\":"
@@ -561,6 +570,23 @@ eclipse_pkg_postinst() {
     elog "\tURL:  http://download.eclipse.org/eclipse/updates/3.5"
     elog "\tName: Eclipse Galileo Updates"
     elog "\tURL:  http://download.eclipse.org/releases/galileo"
+    elog
+    ewarn "Eclipse is fragile on source-based distributions. Upgrading any of the following"
+    ewarn "exheres will cause Eclipse to fail on start-up, often without a meaningful error"
+    ewarn "or warning message:"
+    ewarn
+    ewarn "\tdev-libs/glib"
+    ewarn "\tmedia-libs/libpng"
+    ewarn "\tx11-libs/gtk+"
+    ewarn
+    ewarn "Upgrading any optionally enabled dependencies of the \"dev-java/swt\" (e.g.,"
+    ewarn "\"x11-libs/cairo\", \"x11-dri/mesa\") can also cause this failure. If this"
+    ewarn "happens to you, don't panic; instead, try:"
+    ewarn
+    ewarn "* Reinstalling \"dev-java/swt\"."
+    ewarn "* Reinstalling all of the above dependencies."
+    ewarn "* Reinstalling \"dev-java/swt\", again."
+    ewarn "* Reinstalling Eclipse itself probably won't help. You may panic now."
 }
 
 # ....................{ PATCH                              }....................

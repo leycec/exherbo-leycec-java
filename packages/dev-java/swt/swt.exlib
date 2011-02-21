@@ -23,8 +23,13 @@ in tandem with the Eclipse IDE. It is an alternative to the AWT and Swing Java
 GUI toolkits provided by Sun Microsystems as part of the J2SE Platform.
 "
 
-#FIXME: Define additional mirrors.
-DOWNLOAD_ROOT="http://download.eclipse.org/eclipse/downloads/drops/R-${PV}-201002111343"
+#FIXME: Define additional mirrors. Also, note that old releases are hosted at
+#"http://archive.eclipse.org" while new releases are hosted at
+#"http://download.eclipse.org". Hence, first try the latter and only if that
+#fails fallback to the latter. Does cave resolution support this yet?
+DOWNLOAD_HOME="http://archive.eclipse.org/eclipse/downloads/drops/R-${PV}-201002111343"
+#DOWNLOAD_HOME="http://download.eclipse.org/eclipse/downloads/drops/R-${PV}-201002111343"
+#http://archive.eclipse.org/eclipse/downloads/drops/R-3.5.2-201002111343/download.php?dropFile=swt-3.5.2-gtk-linux-x86_64.zip
 
 # Eclipse also bundles SWT source. That source, however, is 32-bit specific.
 # Its "build.xml" file resides at "plugins/org.eclipse.swt.gtk.linux.${ARCH}/build.xml",
@@ -41,8 +46,8 @@ DOWNLOAD_ROOT="http://download.eclipse.org/eclipse/downloads/drops/R-${PV}-20100
 # Nonetheless, our fake "build.xml" file seems to be sufficient. This suggests
 # the Eclipse team over-engineered their SWT build process...by a lot.
 DOWNLOADS="
-    platform:x86?   ( ${DOWNLOAD_ROOT}/${PNV}-gtk-linux-x86.zip )
-    platform:amd64? ( ${DOWNLOAD_ROOT}/${PNV}-gtk-linux-x86_64.zip )
+    platform:x86?   ( ${DOWNLOAD_HOME}/${PNV}-gtk-linux-x86.zip )
+    platform:amd64? ( ${DOWNLOAD_HOME}/${PNV}-gtk-linux-x86_64.zip )
 "
 HOMEPAGE="http://www.eclipse.org"
 UPSTREAM_DOCUMENTATION="http://www.eclipse.org/${PN}/docs.php [[ lang = en ]]"
