@@ -189,9 +189,7 @@ MYOPTIONS="
     gnome
     doc    [[ description = [ Install Eclipse documentation plugins (not recommended) ] ]]
     source [[ description = [ Install Eclipse source plugins (not recommended) ] ]]
-    platform:
-        amd64
-        x86
+    platform: amd64 x86
 "
 
 # Eclipse comes bundled with both the 3.x.x. and 4.x.x series of JUnit.
@@ -339,7 +337,7 @@ eclipse_src_unpack() {
     # Extract all precompiled Ant task JAR files from its binary tarball into
     # ${TEMP}, so as to avoid overwriting files extracted above.
     echo ">>> Unpacking ${ECLIPSE_BUILD_ARCHIVE} to ${PWD}"
-    edo tar xvjf "${FETCHEDDIR}/${ECLIPSE_ANT_ARCHIVE}" \
+    edo tar xvjf "${FETCHEDDIR}/${ECLIPSE_ANT_ARCHIVE}"\
         --anchored --wildcards "${ECLIPSE_ANT_NV}/lib/*.jar"
 
     if   option platform:amd64; then ECLIPSE_BUILD_ARCH="x86_64"
@@ -351,11 +349,11 @@ eclipse_src_unpack() {
 
     # Notify Ant of our target architecture and bootstrap classpath.
     ANT_PARAMS+=(
-        "-DbuildArch=${ECLIPSE_BUILD_ARCH}"
-        "-Dbootclasspath=${ECLIPSE_BOOTSTRAP_CLASSPATH}"
-        "-DdestDir=${IMAGE}"
-        "-Dprefix=${ECLIPSE_PREFIX}"
-        "-DlibDir=${ECLIPSE_LIBDIR}"
+        -DbuildArch="${ECLIPSE_BUILD_ARCH}"
+        -Dbootclasspath="${ECLIPSE_BOOTSTRAP_CLASSPATH}"
+        -DdestDir="${IMAGE}"
+        -Dprefix="${ECLIPSE_PREFIX}"
+        -DlibDir="${ECLIPSE_LIBDIR}"
     )
 
     edo ln -s "${FETCHEDDIR}/${ECLIPSE_FETCH_ARCHIVE}" "${WORK}"/
@@ -368,13 +366,13 @@ eclipse_src_unpack() {
     # not sufficient to pass "-Dbuild.libgnomeproxy=false", due to subtleties.
     edo pushd "${WORK}"
     if ! option gnome; then
-        eclipse_xmlstarlet_ed "${ANT_BUILD_XML}" --delete \
+        eclipse_xmlstarlet_ed "${ANT_BUILD_XML}" --delete\
             "/project/target[@name='compilelibs']/antcall[@target='compile.libgnomeproxy']"
     fi
 
     # Prevent Ant from building native SWT C and C++ libraries. We've already
     # built these libraries as an exheres dependency.
-    eclipse_xmlstarlet_ed "${ANT_BUILD_XML}" --delete \
+    eclipse_xmlstarlet_ed "${ANT_BUILD_XML}" --delete\
         "/project/target[@name='compilelibs']/ant[@target='build.nativeLibraries']" \
 
     # Pop goes whoever reads comments.
